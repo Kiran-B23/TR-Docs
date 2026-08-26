@@ -1,0 +1,70 @@
+# Captured by running ./.venv/bin/python test_server.py on 26 Aug 2026
+# mcp 2.1.1 · httpx2 2.12.0 · pydantic 2.13.4 · Python 3.12.3
+# Rich log lines (INFO ...) removed; everything else is verbatim.
+
+protocol_version: 2026-07-28
+server_info: name='skillmap' title=None version='1.0.0' description=None website_url=None icons=None
+
+--- tools/list ---
+['skill_demand', 'search_jobs', 'save_learner_profile']
+
+search_jobs inputSchema:
+{
+  "type": "object",
+  "properties": {
+    "skill": {
+      "title": "Skill",
+      "type": "string"
+    },
+    "location": {
+      "title": "Location",
+      "type": "string"
+    }
+  },
+  "required": [
+    "skill",
+    "location"
+  ],
+  "title": "search_jobsArguments"
+}
+
+--- resources/templates/list ---
+[('learner://profile/{user_id}', 'application/json')]
+
+--- tools/call save_learner_profile ---
+isError=False  content=[TextContent(type='text', text='Saved profile for Anil.', annotations=None, meta=None)]
+
+--- resources/read (exists) ---
+{
+  "name": "Anil",
+  "skill": "Generative AI",
+  "location": "Hyderabad"
+}
+
+--- prompts/list ---
+[('career_review', [('skill', True), ('location', True)])]
+
+--- prompts/get career_review ---
+I am learning Generative AI and job-hunting in Hyderabad.
+1. Check current demand for Generative AI.
+2. Find openings in Hyderabad.
+3. Tell me the two skills I am most likely missing.
+
+--- tools/call FAILING (ToolError - message preserved) ---
+isError=True
+content=[TextContent(type='text', text='Error executing tool search_jobs: RAPID_API_KEY is not configured on the server.', annotations=None, meta=None)]
+
+--- resources/read (missing) ---
+MCPError: No profile saved for 'nobody'.
+
+--- tools/call unknown tool ---
+is_error=True
+content=[TextContent(type='text', text='Unknown tool: no_such_tool', annotations=None, meta=None)]
+
+--- tools/call missing argument ---
+is_error=True
+content=[TextContent(type='text', text="Error executing tool search_jobs: 1 validation error for search_jobsArguments\nlocation\n  Field required [type=missing, input_value={'skill': 'Python'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing", annotations=None, meta=None)]
+
+--- tools/call unguarded (masked) ---
+is_error=True
+content=[TextContent(type='text', text='Error executing tool unguarded', annotations=None, meta=None)]

@@ -1,0 +1,1 @@
+https://myengineeringpath.dev/genai-engineer/structured-outputs/

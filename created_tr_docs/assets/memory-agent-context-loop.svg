@@ -1,0 +1,60 @@
+<svg viewBox="0 0 860 330" width="100%" style="max-width:860px;height:auto;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif" role="img" aria-label="A user query plus the system prompt and this thread's messages from the checkpointer are assembled into the context; the model then calls a memory tool, the store returns the matching memories as a tool result, and new facts are saved back to the store">
+  <title>How memory reaches the model</title>
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto">
+      <path d="M0,0 L7,3.2 L0,6.4 z" fill="#94a3b8"/></marker>
+    <marker id="ai" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto">
+      <path d="M0,0 L7,3.2 L0,6.4 z" fill="#6366f1"/></marker>
+  </defs>
+
+  <!-- user query -->
+  <rect x="10" y="128" width="112" height="46" rx="9" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="66" y="156" text-anchor="middle" font-size="13.5" font-weight="600" fill="#334155">User query</text>
+
+  <!-- assembled context -->
+  <rect x="148" y="26" width="272" height="196" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="284" y="49" text-anchor="middle" font-size="13" font-weight="700" fill="#334155">Agent assembles the context</text>
+
+  <rect x="164" y="64" width="240" height="46" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.4"/>
+  <text x="284" y="84" text-anchor="middle" font-size="12.5" font-weight="600" fill="#334155">System prompt + memory rules</text>
+  <text x="284" y="101" text-anchor="middle" font-size="11" fill="#64748b">procedural memory</text>
+
+  <rect x="164" y="124" width="240" height="46" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.4"/>
+  <text x="284" y="144" text-anchor="middle" font-size="12.5" font-weight="600" fill="#92400e">This thread&#8217;s messages</text>
+  <text x="284" y="161" text-anchor="middle" font-size="11" fill="#a16207">short-term &#183; via CHECKPOINTER</text>
+
+  <text x="284" y="196" text-anchor="middle" font-size="10.5" fill="#94a3b8">no memories here yet &#8212; the model has to ask</text>
+
+  <!-- model -->
+  <rect x="466" y="118" width="160" height="66" rx="9" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+  <text x="546" y="143" text-anchor="middle" font-size="13.5" font-weight="600" fill="#065f46">Model reasons</text>
+  <text x="546" y="160" text-anchor="middle" font-size="11" fill="#047857">decides it needs to know</text>
+  <text x="546" y="174" text-anchor="middle" font-size="11" fill="#047857">who this learner is</text>
+
+  <!-- store -->
+  <rect x="694" y="118" width="156" height="66" rx="9" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="772" y="145" text-anchor="middle" font-size="13.5" font-weight="600" fill="#3730a3">STORE</text>
+  <text x="772" y="165" text-anchor="middle" font-size="11" fill="#4f46e5">long-term &#183; per user</text>
+
+  <!-- flow arrows -->
+  <line x1="126" y1="151" x2="142" y2="151" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#ar)"/>
+  <line x1="424" y1="151" x2="460" y2="151" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#ar)"/>
+
+  <!-- pull: request -->
+  <line x1="630" y1="136" x2="688" y2="136" stroke="#6366f1" stroke-width="1.8" marker-end="url(#ai)"/>
+  <text x="659" y="127" text-anchor="middle" font-size="10.5" fill="#4f46e5">tool call</text>
+
+  <!-- pull: result -->
+  <line x1="690" y1="167" x2="632" y2="167" stroke="#6366f1" stroke-width="1.8" marker-end="url(#ai)"/>
+  <text x="661" y="182" text-anchor="middle" font-size="10.5" fill="#4f46e5">result</text>
+
+  <!-- read label -->
+  <text x="659" y="102" text-anchor="middle" font-size="11.5" font-weight="600" fill="#3730a3">READ</text>
+
+  <!-- write path -->
+  <path d="M546 188 L546 258 L772 258 L772 190" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#ai)"/>
+  <text x="659" y="276" text-anchor="middle" font-size="11.5" fill="#4f46e5">WRITE &#8212; save_memory / save_learner_profile</text>
+
+  <text x="430" y="303" text-anchor="middle" font-size="12" fill="#64748b">Memories arrive as a <tspan font-weight="600" fill="#475569">tool result</tspan>, not as pre-loaded context &#8212; this is the <tspan font-weight="600" fill="#475569">pull</tspan> shape we build.</text>
+  <text x="430" y="322" text-anchor="middle" font-size="11.5" fill="#94a3b8">Push instead loads the profile straight into the system prompt box, before the model runs.</text>
+</svg>

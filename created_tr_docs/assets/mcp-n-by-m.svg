@@ -1,0 +1,51 @@
+<svg viewBox="0 0 840 300" width="100%" style="max-width:840px;height:auto;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif" role="img" aria-label="Without MCP every application needs a custom integration with every tool, giving M times N connectors. With MCP each side implements the protocol once, giving M plus N.">
+  <title>The N by M integration problem</title>
+  <text x="176" y="26" text-anchor="middle" font-size="14" font-weight="700" fill="#991b1b">Without a standard</text>
+  <text x="176" y="44" text-anchor="middle" font-size="11.5" fill="#b91c1c">3 apps &#215; 3 tools = 9 custom integrations</text>
+  <rect x="34" y="58" width="96" height="40" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.4"/>
+  <text x="82" y="83" text-anchor="middle" font-size="12.5" font-weight="600" fill="#334155">Agent</text>
+  <rect x="34" y="120" width="96" height="40" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.4"/>
+  <text x="82" y="145" text-anchor="middle" font-size="12.5" font-weight="600" fill="#334155">Claude</text>
+  <rect x="34" y="182" width="96" height="40" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.4"/>
+  <text x="82" y="207" text-anchor="middle" font-size="12.5" font-weight="600" fill="#334155">IDE</text>
+  <line x1="130" y1="78" x2="228" y2="78" stroke="#ef4444" stroke-width="1.1" opacity="0.75"/>
+  <line x1="130" y1="78" x2="228" y2="140" stroke="#ef4444" stroke-width="1.1" opacity="0.75"/>
+  <line x1="130" y1="78" x2="228" y2="202" stroke="#ef4444" stroke-width="1.1" opacity="0.75"/>
+  <line x1="130" y1="140" x2="228" y2="78" stroke="#ef4444" stroke-width="1.1" opacity="0.75"/>
+  <line x1="130" y1="140" x2="228" y2="140" stroke="#ef4444" stroke-width="1.1" opacity="0.75"/>
+  <line x1="130" y1="140" x2="228" y2="202" stroke="#ef4444" stroke-width="1.1" opacity="0.75"/>
+  <line x1="130" y1="202" x2="228" y2="78" stroke="#ef4444" stroke-width="1.1" opacity="0.75"/>
+  <line x1="130" y1="202" x2="228" y2="140" stroke="#ef4444" stroke-width="1.1" opacity="0.75"/>
+  <line x1="130" y1="202" x2="228" y2="202" stroke="#ef4444" stroke-width="1.1" opacity="0.75"/>
+  <rect x="228" y="58" width="96" height="40" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="1.4"/>
+  <text x="276" y="83" text-anchor="middle" font-size="12.5" font-weight="600" fill="#991b1b">Tavily</text>
+  <rect x="228" y="120" width="96" height="40" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="1.4"/>
+  <text x="276" y="145" text-anchor="middle" font-size="12.5" font-weight="600" fill="#991b1b">JSearch</text>
+  <rect x="228" y="182" width="96" height="40" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="1.4"/>
+  <text x="276" y="207" text-anchor="middle" font-size="12.5" font-weight="600" fill="#991b1b">Drive</text>
+  <text x="176" y="278" text-anchor="middle" font-size="12.5" font-weight="600" fill="#991b1b">every new tool means rebuilding for every app</text>
+  <line x1="378" y1="40" x2="378" y2="260" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="616" y="26" text-anchor="middle" font-size="14" font-weight="700" fill="#3730a3">With MCP</text>
+  <text x="616" y="44" text-anchor="middle" font-size="11.5" fill="#4f46e5">3 + 3 = 6 &#183; each side implements the protocol once</text>
+  <rect x="418" y="58" width="96" height="40" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.4"/>
+  <text x="466" y="83" text-anchor="middle" font-size="12.5" font-weight="600" fill="#334155">Agent</text>
+  <rect x="418" y="120" width="96" height="40" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.4"/>
+  <text x="466" y="145" text-anchor="middle" font-size="12.5" font-weight="600" fill="#334155">Claude</text>
+  <rect x="418" y="182" width="96" height="40" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.4"/>
+  <text x="466" y="207" text-anchor="middle" font-size="12.5" font-weight="600" fill="#334155">IDE</text>
+  <line x1="514" y1="78" x2="576" y2="140" stroke="#6366f1" stroke-width="1.4"/>
+  <line x1="664" y1="140" x2="708" y2="78" stroke="#6366f1" stroke-width="1.4"/>
+  <line x1="514" y1="140" x2="576" y2="140" stroke="#6366f1" stroke-width="1.4"/>
+  <line x1="664" y1="140" x2="708" y2="140" stroke="#6366f1" stroke-width="1.4"/>
+  <line x1="514" y1="202" x2="576" y2="140" stroke="#6366f1" stroke-width="1.4"/>
+  <line x1="664" y1="140" x2="708" y2="202" stroke="#6366f1" stroke-width="1.4"/>
+  <rect x="708" y="58" width="96" height="40" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.4"/>
+  <text x="756" y="83" text-anchor="middle" font-size="12.5" font-weight="600" fill="#3730a3">Tavily</text>
+  <rect x="708" y="120" width="96" height="40" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.4"/>
+  <text x="756" y="145" text-anchor="middle" font-size="12.5" font-weight="600" fill="#3730a3">JSearch</text>
+  <rect x="708" y="182" width="96" height="40" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.4"/>
+  <text x="756" y="207" text-anchor="middle" font-size="12.5" font-weight="600" fill="#3730a3">Drive</text>
+  <rect x="576" y="118" width="88" height="44" rx="10" fill="#6366f1" stroke="#4338ca" stroke-width="1.5"/>
+  <text x="620" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">MCP</text>
+  <text x="616" y="278" text-anchor="middle" font-size="12.5" font-weight="600" fill="#3730a3">a new tool plugs in once and every app can use it</text>
+</svg>

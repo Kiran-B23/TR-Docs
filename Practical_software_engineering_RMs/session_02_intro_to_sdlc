@@ -1,0 +1,423 @@
+# Introduction to Software Development Life Cycle
+
+**Course:** Practical Software Engineering
+**Topic:** Software Development Life Cycle
+**Session:** 02
+
+---
+
+# Introduction to Software Development Life Cycle
+
+In this session, we will understand the difference between coding and software development, explore what SDLC is and why it matters, walk through all 7 phases of the SDLC, and see how AI is transforming each phase.
+
+<table>
+<tr>
+<td><strong>Coding vs Software Development</strong></td>
+<td><strong>What is SDLC & Why it Matters</strong></td>
+<td><strong>Overview of SDLC Phases</strong></td>
+<td><strong>How AI is Transforming Each Phase</strong></td>
+</tr>
+</table>
+
+---
+
+# 1. Coding vs Software Development
+
+<table>
+<tr>
+<td width="50%">
+
+<h3>1.1 Coding</h3>
+
+Coding is the practice of writing code/program for defined inputs and expected outputs.
+
+<br/>
+
+<code>Input → Coding → Output</code>
+
+</td>
+<td width="50%">
+
+<h3>1.2 Software Development</h3>
+
+Software Development is the process of creating software applications that meet unique business objectives and goals.
+
+</td>
+</tr>
+</table>
+
+Software Development involves multiple phases beyond just coding:
+
+- Requirement Gathering & Analysis
+- Planning
+- Design
+- Development
+- Software Testing
+- Deployment
+- Maintenance
+
+Coding is just one of the phases in SDLC, where the Software Development Team writes code to build an application.
+
+### Software Applications — Objectives
+
+<table>
+<tr>
+<th>Application</th>
+<th>Objective</th>
+</tr>
+<tr>
+<td><strong>Uber</strong></td>
+<td>Commute Servicing</td>
+</tr>
+<tr>
+<td><strong>Amazon</strong></td>
+<td>Smooth Shopping Functionality</td>
+</tr>
+<tr>
+<td><strong>Swiggy</strong></td>
+<td>Quick and Efficient Food Delivery</td>
+</tr>
+<tr>
+<td><strong>Twitter</strong></td>
+<td>User Engagement</td>
+</tr>
+</table>
+
+---
+
+# 2. Software Development Life Cycle
+
+Developing software requires proper planning, design, development, and more. This structured process is commonly known as **Software Development Life Cycle (SDLC)**.
+
+SDLC helps organizations follow a step-by-step process during software development, to ensure that the final product meets users' requirements and maintains high quality.
+
+## 2.1 SDLC — Phases
+
+The SDLC consists of multiple phases, where each phase involves specific tasks to be carried out.
+
+### Analogy — Think of it Like Making a Movie
+
+- **Requirements** → What's the story about?
+- **Planning** → Set the budget, hire the cast, fix the schedule
+- **Design** → Storyboard every scene
+- **Development** → Shoot the film
+- **Testing** → Edit and fix mistakes in the cutting room
+- **Deployment** → Release it to theaters
+- **Maintenance** → Handle reviews, fix issues, release director's cuts
+
+Every successful software product passes through these phases — in sequence or iteratively.
+
+<table>
+<tr>
+<td><strong>Requirement Gathering</strong></td>
+<td>→</td>
+<td><strong>Planning</strong></td>
+<td>→</td>
+<td><strong>Design</strong></td>
+<td>→</td>
+<td><strong>Development</strong></td>
+<td>→</td>
+<td><strong>Testing</strong></td>
+<td>→</td>
+<td><strong>Deployment</strong></td>
+<td>→</td>
+<td><strong>Maintenance</strong></td>
+</tr>
+</table>
+
+<MultiLineNote>
+AI is now embedded in ALL 7 phases
+</MultiLineNote>
+
+---
+
+# 3. AI in Software Development Life Cycle
+
+## 3.1 Why AI in SDLC?
+
+- **~55%** faster code generation with AI pair programming
+- **~30%** reduction in testing effort using AI-based test generation tools
+- **~3x** faster bug detection when AI is applied
+
+Developers who learn to leverage AI in SDLC will be **10x** more productive than those who don't.
+
+---
+
+## 3.2 Phase 1 — Requirement Gathering & Analysis
+
+This phase helps us understand **what to build and why** — gathering requirements, sorting them into *functional* (what the app does) and *non-functional* (how well it performs) needs.
+
+Everything is captured in an **SRS (Software Requirements Specification)** document that guides the entire build.
+
+### Use Case: Building an E-Commerce App
+
+<details>
+<summary><strong>Traditional Approach</strong></summary>
+
+- Client shares the idea — *"I want to sell products online"*
+- Product Owner asks targeted questions to understand the idea deeply — *What products? How will payments work?*
+- Every answer is manually written down and organized into an SRS document
+- Document is reviewed, corrected, and finalized
+
+</details>
+
+<details>
+<summary><strong>AI-Enhanced Approach</strong></summary>
+
+- Paste the client's rough idea into an AI tool
+- AI instantly asks the right questions and structures the requirements
+- A categorized SRS-ready list is generated in minutes — covering features, performance needs, and edge cases
+
+</details>
+
+<details>
+<summary><strong>Prompt</strong></summary>
+
+>```
+>I want to build an e-commerce app. List all requirements for it — group them into user features, admin features, and performance needs.
+>```
+
+</details>
+
+**Tools:** Claude, ChatGPT
+
+---
+
+## 3.3 Phase 2 — Planning
+
+Every great piece of software starts with a great plan.
+
+This is where the project gets its direction — defining scope, timeline, budget, team, and identifying risks before a single line of code is written.
+
+### Use Case: Building an E-Commerce App — Project Planning & Task Breakdown
+
+<details>
+<summary><strong>Traditional Approach</strong></summary>
+
+- The SRS document from the previous phase is taken as a reference
+- Each feature is picked one by one and time is estimated based on past experience
+- Everything is manually organized into a final plan — takes a lot of time
+
+</details>
+
+<details>
+<summary><strong>AI-Enhanced Approach</strong></summary>
+
+AI breaks features into smaller tasks, estimates time for each, and creates a realistic project plan in seconds.
+
+</details>
+
+<details>
+<summary><strong>Prompt</strong></summary>
+
+>```
+>I'm building an e-commerce app with these features: signup, login, product listing, search, cart, and payment. Break each feature into smaller tasks with time estimates. Give a simple timeline for 3 months.
+>```
+
+</details>
+
+**Tools:** Claude, ChatGPT, Linear, Jira AI
+
+---
+
+## 3.4 Phase 3 — Design
+
+This is the stage where requirements are transformed into **technical blueprints**, **prototypes**, and **system architectures** before coding begins.
+
+### Use Case: Building an E-Commerce App — UI Layout Design
+
+<details>
+<summary><strong>Traditional Approach</strong></summary>
+
+- Designers manually create screens and database structure
+- Even a small change means reworking everything from scratch
+
+</details>
+
+<details>
+<summary><strong>AI-Enhanced Approach</strong></summary>
+
+Describe what you want in plain text — get a working UI layout in seconds.
+
+</details>
+
+<details>
+<summary><strong>Prompt</strong></summary>
+
+>```
+>Generate a design template for an e-commerce product listing page. Use a modern minimal layout with a top navigation bar, left sidebar for category filters, and a grid layout for product cards showing image, name, price, and star rating. Use a clean white background with blue accent colors.
+>```
+
+</details>
+
+**Tools:** Figma AI, Claude, Lovable
+
+---
+
+## 3.5 Phase 4 — Development
+
+This is the stage where the actual **coding begins** — developers take the design blueprint and convert it into a working application, feature by feature.
+
+### Use Case: Building an E-Commerce App — Cart Function
+
+<details>
+<summary><strong>Traditional Approach</strong></summary>
+
+Developers write every line of code manually. Even a simple feature like cart calculation takes significant effort, and one small mistake anywhere can break the entire functionality.
+
+</details>
+
+<details>
+<summary><strong>AI-Enhanced Approach</strong></summary>
+
+AI-assisted coding (e.g., Copilot) increases speed and consistency. Just tell the AI what the cart should do in plain English — it writes the complete working code for you in seconds. The developer just reads it, checks it, and uses it.
+
+</details>
+
+<details>
+<summary><strong>Prompt</strong></summary>
+
+>```
+>Write a function that takes a list of cart items where each item has a name, price, and quantity. Calculate the total price. If the total is above 1000, apply a 10% discount. If the total is below 500, add a delivery fee of 50 rupees.
+>```
+
+</details>
+
+**Tools:** Claude Code, GitHub Copilot, Cursor
+
+---
+
+## 3.6 Phase 5 — Software Testing
+
+In this phase, software testers perform various tests to validate the software and identify defects and bugs based on the requirements document.
+
+### Use Case: Building an E-Commerce App — Testing the Cart Calculation
+
+<details>
+<summary><strong>Traditional Approach</strong></summary>
+
+- Test cases are written manually for each feature
+- Covering all scenarios takes significant effort
+- Edge cases are often missed, leading to bugs reaching the live application
+
+</details>
+
+<details>
+<summary><strong>AI-Enhanced Approach</strong></summary>
+
+- Paste the code into an AI tool
+- AI automatically generates all possible test cases including edge cases
+- Bugs are detected early before the application goes live
+
+</details>
+
+<details>
+<summary><strong>Prompt</strong></summary>
+
+>```
+>Here is a cart function that calculates the total price. Generate all possible test cases.
+>```
+
+</details>
+
+**Tools:** Claude, Testim, Qodo AI
+
+### Examples of Software Bugs/Defects
+
+<details>
+<summary><strong>Bug in the Pricing Functionality</strong></summary>
+
+Customer added two items in the cart, but was charged for three.
+
+- **Expected price:** 200 + 200 = 400
+- **Actual price shown:** 600
+
+This shows an example of a bug in the pricing functionality.
+
+</details>
+
+---
+
+## 3.7 Phase 6 — Deployment
+
+In this phase, the final product is delivered to end-users by making it available for download, access, or install.
+
+<details>
+<summary><strong>Traditional Approach</strong></summary>
+
+In the Deployment phase, the following things should be considered:
+
+- Physical environment (Setting up Servers)
+- Documentation (User manuals, Installation Guides, Release Notes)
+- Setting up links (Links or URLs for applications)
+- Setting up a production database for users
+
+*and many more...*
+
+</details>
+
+<details>
+<summary><strong>AI-Enhanced Approach</strong></summary>
+
+Connect code to a deployment platform so that every update is automatically tested and goes live. If errors spike, it rolls back on its own in seconds.
+
+</details>
+
+**Tools:** Vercel, Netlify, Render, GitHub
+
+---
+
+## 3.8 Phase 7 — Maintenance
+
+Software is never truly finished. It gets maintained.
+
+This is the phase where software is released to the users, and any issues/defects that arise are addressed and fixed by the development team.
+
+<details>
+<summary><strong>Traditional Approach</strong></summary>
+
+In the Maintenance phase, the following things should be considered:
+
+- Gather feedback from users to identify areas of improvement in the application
+- Maintain the software by fixing bugs and updating to ensure smooth operation
+- Continuously improve the application by adding new features
+
+*and many more...*
+
+</details>
+
+<details>
+<summary><strong>AI-Enhanced Approach</strong></summary>
+
+AI quickly reads all reviews and summarizes feature requests, bugs, and user feedback in seconds.
+
+</details>
+
+**Tools:** Claude, Sentry, Dependabot
+
+---
+
+## 3.9 Summary — SDLC Phases
+
+| Phase | Purpose |
+|-------|---------|
+| **Requirement Gathering & Analysis** | Understand what to build and why |
+| **Planning** | Define scope, timeline, budget, and risks |
+| **Design** | Create blueprints, prototypes, and system architectures |
+| **Development** | Write code and build the application |
+| **Software Testing** | Validate software and identify defects |
+| **Deployment** | Deliver the product to end-users |
+| **Maintenance** | Fix issues, add features, keep software running |
+
+---
+
+# 4. Benefits of AI in SDLC
+
+- Saves time by automating repetitive tasks
+- Catches bugs and errors early
+- Faster delivery of features
+- Helps teams make smarter decisions
+
+<MultiLineNote>
+AI is not replacing developers. AI is the most powerful tool in every developer's toolkit.
+</MultiLineNote>

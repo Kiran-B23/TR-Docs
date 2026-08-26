@@ -1,0 +1,25 @@
+<svg viewBox="0 0 740 152" width="100%" style="max-width:740px;height:auto;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif" role="img" aria-label="A memory is addressed by namespace, then key, then value">
+  <title>How a memory is addressed</title>
+  <text x="120" y="26" text-anchor="middle" font-size="15" font-weight="700" fill="#334155">namespace</text>
+  <text x="360" y="26" text-anchor="middle" font-size="15" font-weight="700" fill="#334155">key</text>
+  <text x="610" y="26" text-anchor="middle" font-size="15" font-weight="700" fill="#334155">value</text>
+
+  <rect x="20"  y="38" width="200" height="66" rx="10" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+  <rect x="280" y="38" width="160" height="66" rx="10" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+  <rect x="500" y="38" width="220" height="66" rx="10" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+
+  <text x="120" y="62" text-anchor="middle" font-size="12.5" fill="#64748b">a tuple</text>
+  <text x="360" y="62" text-anchor="middle" font-size="12.5" fill="#64748b">a string</text>
+  <text x="610" y="62" text-anchor="middle" font-size="12.5" fill="#64748b">a JSON dictionary</text>
+
+  <text x="120" y="86" text-anchor="middle" font-size="12.5" font-family="ui-monospace,Menlo,Consolas,monospace" fill="#3730a3">("learners",)</text>
+  <text x="360" y="86" text-anchor="middle" font-size="12.5" font-family="ui-monospace,Menlo,Consolas,monospace" fill="#3730a3">"learner_001"</text>
+  <text x="610" y="86" text-anchor="middle" font-size="12.5" font-family="ui-monospace,Menlo,Consolas,monospace" fill="#3730a3">{"skill": "GenAI"}</text>
+
+  <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto">
+    <path d="M0,0 L7,3.2 L0,6.4 z" fill="#94a3b8"/></marker></defs>
+  <line x1="224" y1="71" x2="272" y2="71" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#ar)"/>
+  <line x1="444" y1="71" x2="492" y2="71" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#ar)"/>
+
+  <text x="370" y="134" text-anchor="middle" font-size="12.5" fill="#64748b">Which folder it goes in&#160;&#160;&#183;&#160;&#160;what it is called&#160;&#160;&#183;&#160;&#160;what is actually stored</text>
+</svg>

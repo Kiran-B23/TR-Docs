@@ -1,0 +1,7 @@
+langchain
+langgraph
+langchain-google-genai
+langchain-tavily
+python-dotenv
+requests
+numpy

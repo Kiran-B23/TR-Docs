@@ -1,0 +1,31 @@
+<svg viewBox="0 0 760 285" width="100%" style="max-width:760px;height:auto;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif" role="img" aria-label="stdio runs the server as a local subprocess over pipes; Streamable HTTP runs it independently and clients POST to a URL">
+  <title>stdio versus Streamable HTTP</title>
+  <defs><marker id="t1" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 z" fill="#94a3b8"/></marker></defs>
+  <text x="188" y="22" text-anchor="middle" font-size="14" font-weight="700" fill="#92400e">stdio</text>
+  <rect x="16" y="34" width="344" height="196" rx="12" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="188" y="53" text-anchor="middle" font-size="11" fill="#a16207">one machine</text>
+  <rect x="46" y="66" width="130" height="44" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.4"/>
+  <text x="111" y="93" text-anchor="middle" font-size="12" font-weight="600" fill="#334155">Client</text>
+  <rect x="200" y="66" width="130" height="44" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.4"/>
+  <text x="265" y="93" text-anchor="middle" font-size="12" font-weight="600" fill="#92400e">Your server</text>
+  <line x1="180" y1="80" x2="196" y2="80" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#t1)"/>
+  <line x1="196" y1="98" x2="180" y2="98" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#t1)"/>
+  <text x="188" y="132" text-anchor="middle" font-size="11" fill="#a16207">stdin / stdout pipes</text>
+  <text x="188" y="160" text-anchor="middle" font-size="11.5" fill="#64748b">the client launches your server</text>
+  <text x="188" y="177" text-anchor="middle" font-size="11.5" fill="#64748b">as a subprocess</text>
+  <text x="188" y="205" text-anchor="middle" font-size="11.5" font-weight="600" fill="#92400e">never print() to stdout</text>
+  <text x="576" y="22" text-anchor="middle" font-size="14" font-weight="700" fill="#3730a3">Streamable HTTP</text>
+  <rect x="400" y="34" width="344" height="196" rx="12" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="576" y="53" text-anchor="middle" font-size="11" fill="#4f46e5">any machine that can reach the URL</text>
+  <rect x="424" y="66" width="120" height="44" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.4"/>
+  <text x="484" y="93" text-anchor="middle" font-size="12" font-weight="600" fill="#334155">Client</text>
+  <rect x="600" y="66" width="120" height="44" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.4"/>
+  <text x="660" y="93" text-anchor="middle" font-size="12" font-weight="600" fill="#3730a3">Your server</text>
+  <line x1="548" y1="88" x2="596" y2="88" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#t1)"/>
+  <text x="572" y="80" text-anchor="middle" font-size="10" fill="#4f46e5">POST /mcp</text>
+  <text x="576" y="132" text-anchor="middle" font-size="11" fill="#4f46e5">HTTP + optional SSE stream</text>
+  <text x="576" y="160" text-anchor="middle" font-size="11.5" fill="#64748b">the server runs on its own;</text>
+  <text x="576" y="177" text-anchor="middle" font-size="11.5" fill="#64748b">many clients can connect</text>
+  <text x="576" y="205" text-anchor="middle" font-size="11.5" font-weight="600" fill="#3730a3">binds to 127.0.0.1 by default</text>
+  <text x="380" y="264" text-anchor="middle" font-size="12.5" fill="#64748b">Same JSON-RPC messages, same tools, same code &#8212; only the binding changes</text>
+</svg>
