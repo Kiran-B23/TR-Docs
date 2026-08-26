@@ -599,6 +599,14 @@ The rule: **an MCP tool argument is something the model can choose. Identity is 
 
 </MultiLineWarning>
 
+### One More Thing Worth Knowing Before You Connect Someone Else's Server
+
+Identity is one direction of trust. There is a second, and it runs the other way.
+
+A tool's **description is text the model reads and acts on**. Connecting somebody's MCP server means letting them put instructions into your agent's context — which is a meaningfully different decision from installing a library that only your code calls. Tool **output** lands in that context too: `search_jobs` returns strings from a third-party API, and those strings are untrusted input by the time the model sees them.
+
+We are not covering the defences today. But a server author who has never heard that a description *is* an instruction will eventually write one — or trust one — that should not be trusted.
+
 ---
 
 ## Step 4: The Resource
@@ -1065,7 +1073,15 @@ Once someone else connects to your server, changing an argument name is not a re
 
 ### See It Break
 
-Worth doing once, because it takes thirty seconds and the lesson sticks. Rename `location` to `city` in `search_jobs`:
+Worth doing once, because it takes thirty seconds and the lesson sticks.
+
+First, look at the contract as it stands — this is what any client that connects will discover:
+
+```bash
+npx @modelcontextprotocol/inspector --cli uv run server.py --method tools/list
+```
+
+Now rename `location` to `city` in `search_jobs`:
 
 ```python
 def search_jobs(skill: str, city: str) -> list[dict]:   # was: location
@@ -1086,7 +1102,9 @@ city
   Field required [type=missing, input_value={'skill': 'Generative AI', 'location': 'Hyderabad'}, ...]
 ```
 
-Nothing about your logic changed. You renamed one parameter, and every caller that had already discovered your old schema now fails.
+Run `tools/list` again and compare. The published schema now says `city` where it said `location` — you did not edit a schema, you edited a parameter, and the contract changed underneath every client that had already read it.
+
+Nothing about your logic changed. You renamed one parameter, and a call built against your old schema now fails.
 
 That is what "your schemas are a public contract" means in practice, and why that rename is a `2.0.0` rather than a tidy-up. Rename it back before continuing.
 
@@ -1367,8 +1385,9 @@ def your_tool(argument: str) -> str:
     """Say what this does AND when the model should use it."""
     try:
         result = do_the_work(argument)
-    except Exception as e:
-        raise ToolError(f"Could not complete the request: {type(e).__name__}")
+    except Exception as e:                     # narrow this once you know what can fail
+        logger.exception("your_tool failed")
+        raise ToolError(f"Could not complete the request: {type(e).__name__}") from e
     return result
 
 
@@ -1379,7 +1398,7 @@ if __name__ == "__main__":
 Four things are deliberate in those fifteen lines:
 
 * **The version starts at `0.1.0`.** Below `1.0.0` you are telling clients the schema is not stable yet — which is honest, and buys you room to rename things.
-* **The `try`/`except` is already there.** Not as polish, but because an unconverted exception reaches the model as nothing useful (Step 9). Start with it and you never have to remember it.
+* **The `try`/`except` is already there.** Not as polish, but because an unconverted exception reaches the model as nothing useful (Step 9). Start with it and you never have to remember it — then narrow `Exception` to whatever your work actually raises, as we did with `requests.RequestException`.
 * **The docstring says *when*, not just what.** That is the only guidance the model gets.
 * **`transport="stdio"`** so a client can launch it immediately. Switch to `"streamable-http"` the day something remote needs it.
 

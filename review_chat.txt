@@ -7,7 +7,7 @@
 │                  ▝▝ ▝▝                  │ Added a Loops breakdown to `/usag… │
 │                                         │ Added `modelPicker` setting: cura… │
 │   Opus 5 · Claude Team · CD - Nxtwave   │ /release-notes for more            │
-│        ~/TR Docs/created_tr_docs        │                                    │
+│   ~/TR Docs/created_tr_docs/mcp_code    │                                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
 
@@ -7669,8 +7669,10 @@
      assets/ce-classic-prompting-techniques.png 62316 bytes
      … +4 lines (ctrl+o to expand)
 
-● Write(building-llm-applications--context-engineering.md)
-  ⎿  Wrote 366 lines to building-llm-applications--context-engineering.md
+● Write(~/TR 
+       Docs/created_tr_docs/building-llm-applications--context-engineering.md)
+  ⎿  Wrote 366 lines to
+     ../building-llm-applications--context-engineering.md
        1 # Context Engineering
        2 
        3 **Course:** Building LLM Applications  
@@ -9290,3 +9292,533 @@
 ✻ Sautéed for 2m 50s
 
 ※ recap: You've been reviewing and fixing NxtWave TR docs; the Context Engineering doc is now complete with a verified hands-on lab, filled gaps, and a redrawn diagram. Next: confirm licensing on the six remaining third-party images, or assign session numbers.
+
+❯ /export review_chat                                                           
+  ⎿  Conversation exported to: /home/nxtwave/TR
+     Docs/created_tr_docs/review_chat.txt
+
+※ recap: Goal: make the Context Engineering TR doc technically accurate and teachable. All flagged issues are now fixed — both content gaps, the technique vocabulary, failure-mode prose, the hands-on lab, and the redrawn diagram. Next: confirm licensing on the six remaining third-party images.
+
+❯ '/home/nxtwave/TR                                                             
+  Docs/created_tr_docs/building-llm-applications--build-your-own-mcp-server.md' 
+                                                                                
+  Check against these                                                           
+                                                                                
+  Here's the mental model first, then the concepts that matter.The essentials   
+                                                                                
+  1. Participants. A host (the AI app — Claude Code, VS Code, etc.) spawns one  
+  client per server, and each client holds a dedicated connection. Your job as  
+  a server author is only to serve context and actions — MCP deliberately says  
+  nothing about how the app uses the LLM or manages context.                    
+                                                                                
+  2. Two layers. The data layer is JSON-RPC 2.0: message shapes, discovery,     
+  primitives, notifications. The transport layer is how bytes move — stdio for  
+  local processes, Streamable HTTP for remote servers. Build for stdio first;   
+  it's a subprocess reading stdin and writing stdout, so there's no networking  
+  to debug.                                                                     
+                                                                                
+  3. The three server primitives. Tools are functions the model calls,          
+  resources are data the app pulls in as context, prompts are templates the     
+  user picks. The control column in the diagram is the real design question: if 
+  the model should decide when to use it, it's a tool; if it's reference data,  
+  it's a resource.                                                              
+                                                                                
+  4. Tool anatomy. Each tool has a name, human-readable title, description, and 
+  an inputSchema in JSON Schema; results come back as a content array of typed  
+  blocks. Treat description and schema as your prompt engineering surface —     
+  that text is literally all the model sees when deciding whether to call you.  
+  Names should be namespaced (weather_current, not get).                        
+                                                                                
+  5. Statelessness. This is the part where most tutorials will mislead you. As  
+  of the 2026-07-28 revision, the initialize/initialized handshake and the      
+  Mcp-Session-Id header are gone. Each request carries its protocol version,    
+  client identity, and capabilities in _meta, and there's an optional           
+  server/discover RPC if a client wants capabilities up front. If your server   
+  needs state across calls, mint an explicit handle from a tool and have the    
+  model pass it back as an argument — don't hide state in the transport.        
+                                                                                
+  6. Elicitation. The one client-side primitive worth learning. It lets your    
+  server ask the user for missing input or confirmation mid-call. It now works  
+  via Multi Round-Trip Requests: you return resultType: "input_required" with   
+  what you need, and the client retries with inputResponses attached.           
+                                                                                
+  7. Utilities you'll hit quickly. Pagination via cursors, cache hints (ttlMs,  
+  cacheScope) on list results, and opt-in change notifications via a            
+  subscriptions/listen stream.                                                  
+                                                                                
+  8. Skip these. Sampling, roots, logging, and the old HTTP+SSE transport are   
+  all deprecated with a twelve-month runway. Log to stderr instead, and call an 
+  LLM API directly if you need one.                                             
+                                                                                
+  9. Only if you go remote: OAuth. Your server acts as a resource server, and   
+  Dynamic Client Registration is deprecated in favour of Client ID Metadata     
+  Documents. Genuinely the hardest part of MCP — for a student project, stay on 
+  stdio and you avoid it entirely.                                              
+                                                                                
+  10. Extensions. Tasks (long-running work) and MCP Apps (interactive UI) live  
+  outside the core spec now as opt-in extensions. Ignore until you need them.   
+                                                                                
+  A practical warning: most blog posts, YouTube tutorials, and even Anthropic's 
+  own MCP course predate the stateless rewrite, so their code won't match the   
+  current SDKs. Work from the spec docs at modelcontextprotocol.io and pin your 
+  SDK version. TypeScript, Python, Go, and C# are the Tier 1 SDKs, and MCP      
+  Inspector lets you poke at your server without wiring up a real client.       
+                                                                                
+  What's the use case, and which language are you comfortable in? I can sketch  
+  the primitive breakdown for it.                                               
+
+● This list contradicts something I put in the doc — specifically my
+  wire-messages diagram, which shows initialize as the first exchange. Let me
+  verify item 5 before anything else, because if it's right I introduced an
+  error.
+
+● Fetch(https://modelcontextprotocol.io/specification/2026-07-28/basic/versionin
+       g)
+  ⎿  Received 11.2KB (200 OK)
+
+● Confirmed — and I introduced an error. The spec is unambiguous:
+
+  ▎ "There is no negotiation handshake. Every request carries its protocol 
+  ▎ version, and the server accepts or rejects each request independently."
+
+  My wire diagram shows initialize as exchange #1. Let me find out what the SDK
+  actually does:
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs/mcp_code" && echo "### does the
+      server implement server/discover? ###" && timeout 240 npx -y
+      @modelcontextprotocol/ins…)
+  ⎿  ### does the server implement server/discover? ###
+     {
+       "error": {
+     … +12 lines (ctrl+o to expand)
+
+● That's the Inspector CLI's own method list, not the server's. Let me probe the
+  server directly with raw JSON-RPC:
+
+● Bash(SC=/tmp/claude-1000/-home-nxtwave-TR-Docs/fa5f1727-64fa-4859-860b-8b7de5b
+      83245/scratchpad; cd "/home/nxtwave/TR Docs/created_tr_docs/mcp_code" &&
+      (./.venv/bin/p…)
+  ⎿  Error: Exit code 144
+     ### 1. server/discover (modern) ###
+     {"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Bad Request: 
+     Missing session ID"}}
+
+     ### 2. tools/list WITHOUT any initialize (stateless?) ###
+     {"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Bad Request: 
+     Missing session ID"}}
+
+     ### 3. legacy initialize ###
+     event: message
+     data: {"jsonrpc":"2.0","id":3,"result":{"capabilities":{"experimental":{},"
+     prompts":{"listChanged":false},"resources":{"listChanged":false,"subscribe"
+     :false},"tools":{"listChanged":false}},"protocolVersion":"2025-06-18","serv
+     erInfo":{"name":"skillmap","version":"1.0.0"}}}
+
+● Decisive, and more interesting than a simple error. The SDK and the spec
+  disagree:
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs/mcp_code" && ./.venv/bin/python
+      - <<'PY' 2>&1 | tail -18
+      import inspect, json…)
+  ⎿  tool decorator params: ['name', 'title', 'description', 'annotations',
+      'icons', 'meta', 'structured_output']
+     tool fields present: {'name': 'search_jobs', 'title': 'Search Jobs', '
+     … +7 lines (ctrl+o to expand)
+● All verified. Here's the check — and item 5 turns out to be subtler than
+  either the list or my diagram suggests.
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs" && python3 - <<'PY'
+      import io…)
+  ⎿  Error: Exit code 1
+     Traceback (most recent call last):
+       File "<stdin>", line 26, in <module>
+     AssertionError: wire note
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs" && grep -n "detail of one of
+      those four" "building-llm-applications--build-your-own-mcp-server.md";
+      grep -n -A2 "mcp-…)
+  ⎿  109:![Four JSON-RPC exchanges between client and server: initialize re
+     turns the protocol version and server info, tools/list returns the sch
+     emas, tools/call returns content and structuredContent and isError, an
+     … +5 lines (ctrl+o to expand)
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs" && sed -n '109,132p'
+      "building-llm-applications--build-your-own-mcp-server.md")
+  ⎿  ![Four JSON-RPC exchanges between client and server: initialize return
+     s the protocol version and server info, tools/list returns the schemas
+     , tools/call returns content and structuredContent and isError, and re
+     … +28 lines (ctrl+o to expand)
+
+● The author expanded that section. Let me anchor correctly:
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs" && python3 - <<'PY'
+      import io…)
+  ⎿  all three applied
+     1399 lines | 9791 words
+     python blocks 25, non-standalone 2
+     … +3 lines (ctrl+o to expand)
+
+● Checked all ten against the doc. The list is accurate — and item 5 caught a
+  real error of mine.
+
+  The important one: item 5
+
+  You're right that the spec is stateless, and I verified it verbatim:
+
+  ▎ "There is no negotiation handshake. Every request carries its protocol 
+  ▎ version, and the server accepts or rejects each request independently."
+
+  server/discover is a MUST, and the spec's own terminology calls
+  initialize-based revisions (2025-11-25 and earlier) legacy. My wire-messages
+  diagram shows initialize as exchange #1.
+
+  But the resolution is subtler than "the doc is wrong." I probed a running mcp
+  2.1.1 server over HTTP:
+
+  server/discover  ->  Bad Request: Missing session ID
+  tools/list       ->  Bad Request: Missing session ID
+  initialize       ->  works, returns protocolVersion 2025-06-18
+
+  The SDK is legacy. It requires the handshake and session IDs, while its
+  in-process client reports the version string 2026-07-28. So your practical
+  warning inverts here: it's not only the blog posts that predate the stateless
+  rewrite — the current SDK does too. A student who follows the spec instead of
+  the SDK will write code that doesn't run.
+
+  So I kept the diagram (it's what students will actually see) and added a
+  warning box carrying both facts, plus a correction to Step 9's negotiation
+  description. That's the second docs-vs-SDK divergence in this doc, after
+  print().
+
+  The scorecard
+
+  #: 1
+  Item: Host / one client per server
+  Doc status: ✅ Covered — diagram + prose
+  ────────────────────────────────────────
+  #: 2
+  Item: Two layers, transport as binding
+  Doc status: ✅ "A transport is only a binding"
+  ────────────────────────────────────────
+  #: 3
+  Item: Three primitives + control column
+  Doc status: ✅ Restored earlier this session; it's the doc's core
+  ────────────────────────────────────────
+  #: 4
+  Item: Tool anatomy — name/title/description/inputSchema
+  Doc status: ⚠️ title was missing — now added and verified
+  (@mcp.tool(title="Search Jobs"))
+  ────────────────────────────────────────
+  #: 5
+  Item: Statelessness
+  Doc status: ❌ Was wrong — now fixed with the divergence
+  ────────────────────────────────────────
+  #: 6
+  Item: Elicitation
+  Doc status: ❌ Absent. Elicit exists in the SDK. Defensible to defer for
+  2nd-years, but it should be named
+  ────────────────────────────────────────
+  #: 7
+  Item: Pagination, cache hints, subscriptions
+  Doc status: ❌ Absent. cache_hints and subscriptions are real MCPServer params
+  ────────────────────────────────────────
+  #: 8
+  Item: Skip sampling/roots/logging/HTTP+SSE
+  Doc status: ✅ Partly — SSE now flagged legacy; sampling/roots never
+  mentioned,
+  which is fine since they're not server-author concerns
+  ────────────────────────────────────────
+  #: 9
+  Item: OAuth only if remote
+  Doc status: ✅ Aligned — the doc says stay on 127.0.0.1, names auth + Origin
+  as
+  required before exposing
+  ────────────────────────────────────────
+  #: 10
+  Item: Extensions (Tasks, MCP Apps)
+  Doc status: ❌ Absent. extensions is a real param; the spec shows
+  io.modelcontextprotocol/tasks and /ui identifiers
+
+  Doc is 1,399 lines / 9,791 words, tags balanced.
+
+  What I'd still do, and what I'd leave
+
+  Worth adding: one short "what we're not covering" list naming elicitation,
+  pagination, cache hints and extensions with a line each. Right now their
+  absence is silent, and a student who reads the spec afterwards can't tell what
+  was deliberately deferred versus overlooked. That's cheap and it makes the
+  deferrals honest.
+
+  Worth leaving out: the actual mechanics of any of them. For this audience,
+  resultType: "input_required" round-trips and Client ID Metadata Documents are
+  noise.
+
+  One thing your list has that the doc's own testing surfaced independently, and
+  that I'd rate above several of your ten for a first server: the Python SDK 
+  masks any exception that isn't a ToolError, reducing it to Error executing 
+  tool <name>. Verified with a live model — guarded gives the model a diagnosis,
+  unguarded gives it "it failed with an error." That's not in the spec
+  anywhere, and it's the difference between an agent that can recover and one
+  that can't.
+
+✻ Worked for 3m 27s
+
+❯ Check and add necessary concepts that are missing and fix relevant issues     
+
+● Let me verify each API before writing about it.
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs/mcp_code" && ./.venv/bin/python
+      - <<'PY' 2>&1 | tail -30
+      import inspect…)
+  ⎿  Elicit: (message: 'str', schema: 'type[T]') -> 'None'
+        A resolver's request to ask the client.  Returned from a resolver t
+     o signal that the value must be elicited. The framework runs `ctx.elic
+     … +13 lines (ctrl+o to expand)
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs/mcp_code" && ./.venv/bin/python
+      - <<'PY' 2>&1 | tail -22
+      import inspect…)
+  ⎿  ctx.elicit: (self, message: 'str', schema: 'type[ElicitSchemaModelT]')
+      -> 'ElicitationResult[ElicitSchemaModelT]'
+     ctx.log   : (self, level: 'LoggingLevel', data: 'Any', *, logger_name:
+     … +4 lines (ctrl+o to expand)
+
+● ctx: Context is injected and hidden from the model's schema — the same pattern
+  as ToolRuntime from the memory session. Let me check what happens when a
+  client doesn't support elicitation:
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs/mcp_code" && timeout 200
+      ./.venv/bin/python - <<'PY' 2>&1 | tail -12
+      import asyncio…)
+  ⎿  /home/nxtwave/TR Docs/created_tr_docs/mcp_code/.venv/lib/python3.12/si
+     te-packages/anyio/_backends/_asyncio.py:1033: RuntimeWarning: coroutin
+     e 'Context.elicit' was never awaited
+     … +5 lines (ctrl+o to expand)
+
+● ctx.elicit is a coroutine — so elicitation forces async def. Good detail, and
+  it ties to the async note already in the doc. Writing both additions:
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs" && python3 - <<'PY'
+      import io…)
+  ⎿  elicitation section added
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs" && python3 - <<'PY'
+      import io…)
+  ⎿  deferrals section added
+     1475 lines | 10544 words
+     python blocks 26, non-standalone 2: [(5, 'expected an indented block a
+     … +29 lines (ctrl+o to expand)
+
+● Two non-standalone blocks are both intentional signature fragments (the new
+  title example and the rename demo). Let me verify code integrity:
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs" && python3 - <<'PY'
+      import io, re, ast…)
+  ⎿  final code AST-identical to server.py: True
+     elicitation kept OUT of final code (correct): True
+     … +2 lines (ctrl+o to expand)
+
+● Checked all ten and fixed what was missing. Your list was accurate on every
+  point I could verify — and one item caught a real error of mine.
+
+  What was wrong
+
+  Item 5, statelessness — my error. I'd put initialize in the wire diagram as
+  the current mechanism. The spec is explicit: "There is no negotiation 
+  handshake." But the resolution is more useful than a straight correction,
+  because I probed a running SDK 2.1.1 server:
+
+  server/discover  ->  Bad Request: Missing session ID
+  tools/list       ->  Bad Request: Missing session ID
+  initialize       ->  works, returns protocolVersion 2025-06-18
+
+  The SDK is legacy — session IDs and a handshake, which the spec's own
+  terminology calls 2025-11-25 and earlier. So your practical warning inverts
+  here: it isn't only the blog posts that predate the stateless rewrite, the
+  current SDK does too. I kept the diagram (it's what students will actually
+  run) and added a warning carrying both facts, plus corrected Step 9's
+  negotiation description with the real UnsupportedProtocolVersionError /
+  -32022.
+
+  Item 4, tool title — was missing. Verified @mcp.tool(title="Search Jobs")
+  works and the tool exposes name/title/description. Added, with the
+  distinction: name is what the model calls, title is what a person sees.
+
+  What was missing
+
+  Elicitation (item 6) — added as Step 5b. This earned a real section rather
+  than a mention, because of what I found testing it:
+
+  - ctx: Context is injected and hidden from the model's schema — verified.
+    That's the same pattern as ToolRuntime from the memory session, so it's a
+    free callback.
+  - ctx.elicit is a coroutine, so the tool must be async def. I proved the
+    failure mode: a sync tool gives RuntimeWarning: coroutine 'Context.elicit' 
+    was never awaited and silently does nothing. This is the one place in the
+    session where async isn't optional, and it ties to the async note already
+    there.
+  - Framed as an enhancement, never the only path — a client that doesn't
+    support asking won't prompt anyone.
+
+  Marked UNVERIFIED on the full round-trip: the injection and shape are
+  verified, but the in-process client didn't exercise an actual answer. That
+  needs a supporting client before it's taught live.
+
+  Items 7 and 10 — added as "What We Are Not Covering." Pagination, cache hints,
+  subscriptions and OAuth in a table with "when you'll want it"; Tasks and MCP
+  Apps as extensions with their real identifiers (io.modelcontextprotocol/tasks,
+  /ui); and the deprecated set — sampling, roots, protocol logging, HTTP+SSE —
+  flagged as don't learn these from an old tutorial. All four MCPServer params
+  (cache_hints, subscriptions, extensions) verified present.
+
+  That section closes on the pattern the two divergences reveal:
+
+  ▎ When something does not match, check in this order: the spec, then the SDK 
+  ▎ you have installed, then the tutorial. In this session the spec was ahead of
+  ▎ the SDK twice, and a blog post would have been wrong about both. Pin your 
+  ▎ SDK version so you choose when to move.
+
+  Already covered
+
+  Items 1, 2, 3 and 9 were all there — host/one-client-per-server,
+  transport-as-binding, the three primitives with the control column, and
+  stay-on-127.0.0.1-to-avoid-OAuth. Item 8's SSE half was fixed earlier this
+  session.
+
+  State
+
+  1,475 lines / 10,544 words. Final code still AST-identical to
+  mcp_code/server.py, and the elicitation example is deliberately kept out of it
+  so the lab stays minimal. Server runs, three tools listed, tags balanced 6/6
+  and 7/7, all images resolve.
+
+  One judgement call worth surfacing: I labelled elicitation Step 5b rather than
+  renumbering 6–10. It reads as an aside off the primitives rather than a build
+  step, which is what it is — but if you'd rather it were a full Step 6 with
+  everything shifting down, that's a five-minute change.
+
+✻ Crunched for 2m 20s
+
+❯ make it Step 6 and renumber the rest                                          
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs" && echo "### headings ###" &&
+      grep -n '^## Step'
+      "building-llm-applications--build-your-own-mcp-server.md"; echo; ech…)  ⎿  ### headings ###
+     286:## Step 1: Project Setup
+     322:## Step 2: The Smallest Server That Runs
+     … +21 lines (ctrl+o to expand)
+
+● All cross-references found. Renumbering with placeholders to avoid collisions:
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs" && python3 - <<'PY'
+      import io…)
+  ⎿  renumbered; chars changed: 0
+
+     ### headings now ###
+     … +11 lines (ctrl+o to expand)
+
+● Net zero character change is right (5b→6 loses one, 9→10 gains one). Verifying
+  no stale references:
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs" && echo "### all in-body Step
+      references, with what they point at ###" && grep -n 'Step [0-9]'
+      "building-llm-applicat…)
+  ⎿  ### all in-body Step references, with what they point at ###
+     241:| Who is allowed to reach it? | Step 7 |
+     244:Step 11 then puts it back where we began: our own agent, consuming
+     … +30 lines (ctrl+o to expand)
+
+● The sanity check surfaced range references I hadn't caught — "Steps 4–5" and
+  "Steps 7–9". Let me check those:
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs" && sed -n '232,248p'
+      "building-llm-applications--build-your-own-mcp-server.md"; echo; echo "###
+      any other Steps N-M r…)
+  ⎿  ### How We Get There
+
+     Freeing `search_jobs` from that notebook is not one job — it is four q
+     … +25 lines (ctrl+o to expand)
+
+● The roadmap table needs updating too — my regex missed ranges. Fixing:
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs" && python3 - <<'PY'
+      import io…)
+  ⎿  roadmap table corrected
+
+     | The question | Answered by |
+     … +11 lines (ctrl+o to expand)
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs" && python3 - <<'PY'
+      import io, re, ast, os…)
+  ⎿  headings: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] | contiguous 1..11: True
+     referenced steps: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+     dangling references: none
+     … +9 lines (ctrl+o to expand)
+
+● Bash(cd "/home/nxtwave/TR Docs/created_tr_docs" && python3 - <<'PY'
+      import io, re, ast…)
+  ⎿  final code AST-identical to server.py: True
+     server runs, tools: ['skill_demand', 'search_jobs', 'save_learner_prof
+     ile']
+
+● Renumbered. Elicitation is now a full Step 6, with 6–10 shifted to 7–11.
+
+  ┌─────────────────────────────┬─────────┬────────┐
+  │                             │   Was   │  Now   │
+  ├─────────────────────────────┼─────────┼────────┤
+  │ Elicitation                 │ Step 5b │ Step 6 │
+  ├─────────────────────────────┼─────────┼────────┤
+  │ Transports                  │ 6       │ 7      │
+  ├─────────────────────────────┼─────────┼────────┤
+  │ Testing / Inspector         │ 7       │ 8      │
+  ├─────────────────────────────┼─────────┼────────┤
+  │ Structured Error Returns    │ 8       │ 9      │
+  ├─────────────────────────────┼─────────┼────────┤
+  │ Versioning                  │ 9       │ 10     │
+  ├─────────────────────────────┼─────────┼────────┤
+  │ Connecting to Our Own Agent │ 10      │ 11     │
+  └─────────────────────────────┴─────────┴────────┘
+
+  Cross-references updated
+
+  Nine in-body references pointed at old numbers. All rewritten and verified to
+  land on the right section:
+
+  - "ToolError … — Step 9 explains why" (was 8)
+  - "re-run the same Inspector call you ran in Step 8" (was 7)
+  - "nothing useful (Step 9)" ×2, "This is Step 9 again" (were 8)
+  - "as covered in Step 7" for HTTP+SSE (was 6)
+  - "Step 11 then puts it back where we began" (was 10)
+  - "as we did in Step 2" — correctly unchanged
+
+  One thing the renumber exposed
+
+  My first verification regex only matched Step N, so it missed the range
+  references in the "How We Get There" roadmap table. Two were wrong:
+
+  - Steps 7–9 → Steps 8–10 (testing, errors, versioning)
+  - Steps 4–5 → Steps 4–6, and I reworded the question, because elicitation
+    isn't "offering data and workflows":
+
+  ▎ How does it offer data and workflows, and ask us for what it is missing? | 
+  ▎ Steps 4–6
+
+  Worth flagging since it's the kind of thing a find-and-replace silently leaves
+  broken.
+
+  Verification
+
+  - Headings are contiguous 1–11, no gaps
+  - Every referenced step number resolves to a real heading — zero dangling refs
+  - Zero stale 5b occurrences
+  - Final code still AST-identical to mcp_code/server.py; server runs, three
+    tools listed
+  - Tags balanced 6/6, 7/7, 3/3, 3/3; all images resolve
+  - 1,475 lines / 10,549 words
+
+  The two non-standalone Python blocks are the intentional signature fragments —
+  the @mcp.tool(title=...) example and the rename demo in Step 10.
+
+✻ Cogitated for 1m 56s
+
+※ recap: You're reviewing and fixing NxtWave TR docs; the MCP doc just had elicitation added as Step 6 with everything renumbered and verified. Next: decide whether to add the "what we're not covering" items to the Context Engineering doc, or settle session numbering across both docs.

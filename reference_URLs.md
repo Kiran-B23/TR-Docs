@@ -196,3 +196,26 @@ Re-run with:
 **Not verified:** the `uv` flow in the doc's Step 1 — `uv` is not installed on this machine,
 so `mcp_code/.venv` was built with `python3 -m venv` + `pip`. Everything downstream behaves
 identically; `./.venv/bin/python server.py` substitutes for `uv run server.py`.
+
+---
+
+## 7. Claims tested and DISPROVEN
+
+An external review of the MCP server session (26 Aug 2026) raised four defects that
+testing did not support. Recorded here so they are not re-raised, and so the evidence
+survives the conversation. Tested against `mcp 2.1.1`, `python-dotenv`, `requests`,
+Python 3.12.3.
+
+| Claim made | What testing showed |
+|---|---|
+| **`load_dotenv()` searches from the current working directory upward**, so a `.env` beside `server.py` is not found when a client launches it from elsewhere (raised as a blocking defect) | **False.** `find_dotenv(usecwd=False)` walks up from the *calling file's* directory. Ran a script with `.env` beside it, cwd at `/tmp` → key found. The doc's prose is correct. Caveat: it does switch to cwd in a REPL or a frozen binary — neither is the MCP case. |
+| **`from mcp.server import MCPServer` may not exist**, so "every code block fails on line 1" | **False.** `from mcp.server import MCPServer` and `from mcp.server.mcpserver import MCPServer` both import and are the *same object*. `ToolError`, `ResourceNotFoundError` and `Context` all resolve at the paths the doc uses. |
+| **Tavily's body-parameter auth (`json={"api_key": ...}`) is superseded**, so students would all get 401s | **False.** Live call with the doc's exact form returned **HTTP 200** with results. The `Authorization: Bearer` header also works — both forms are currently valid. |
+| **The structured-output JSON in the errors step should be spot-checked** | Already verified. That JSON was captured from a live run, not reconstructed — see §6. |
+
+Findings from the same review that testing **did** support, and which were applied:
+`uv run` resolving the project from the working directory rather than the script path
+(fixed with `uv --directory`), POSIX-only setup commands, the leftover author note,
+broad `except Exception` without logging or chaining, the rename demo not actually
+showing discovery, the missing `.gitignore`, and no mention of tool descriptions and
+tool output as untrusted input.
