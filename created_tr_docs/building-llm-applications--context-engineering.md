@@ -5,83 +5,60 @@
 
 ---
 
-## Let's Understand the Problem: When Prompts Aren't Enough
+## The Problem: Our Agent Gets Worse the Longer You Talk to It
 
-**The Challenge:**
+In the **Building AI Agents with LangChain** session we built the SkillMap Agent. It searches for jobs, researches skill demand, and remembers the learner across sessions. Five turns in, it is doing all of that well.
 
-* Your agents sometimes forget important information mid-conversation
-* Performance degrades as conversations get longer
-* Relevant information gets **lost** in long context windows
-* Costs increase dramatically with larger prompts
+But watch what happens over a longer conversation. The learner asks three questions in a row, each triggering a Tavily search and a JSearch call:
 
-**Traditional Approach (Prompt Engineering):** Focus on crafting the perfect prompt with the right words and instructions.
+* **Turn 1:** "What's the demand for Generative AI?" → Agent searches, returns a summary with salary data.
+* **Turn 3:** "Find me GenAI jobs in Hyderabad." → Agent searches, returns 5 job listings.
+* **Turn 5:** "Now show me AI Engineer roles in Bangalore." → Agent searches, returns 5 more listings.
 
-**The Reality:** Modern AI applications need more than good prompts — they need intelligent information management. That is **Context Engineering**.
+By turn 5, every previous search result — hundreds of tokens of salary data, job titles, company names, apply links — is still sitting in the context window. The agent re-sends all of it to the model on every single turn, even though the learner has moved on.
 
-![Simple prompt engineering sends a system prompt and user message straight to the model; context engineering curates docs, tools, memory files, instructions and message history into the context window before the model sees it](assets/ce-prompt-vs-context-engineering.png)
+* **Turn 7:** "Which of the Bangalore roles need less than 2 years experience?"
 
-**Context Engineering** is the discipline of designing the architecture that feeds an LLM the right information at the right time. It's not about changing the model itself, but about building the bridges that connect it to the outside world — retrieving external data, connecting it to live tools, and giving it a memory to ground its responses in facts, not just its training data.
+The agent re-runs the search instead of reading the results it already has. Or it answers from the Hyderabad results, not the Bangalore ones. Or it starts ignoring the system prompt's formatting rules.
 
-<MultiLineNote>
-**Compact definition** 🎉
+Nothing is broken. The agent is doing exactly what it did on turn 1 — but the context window is now full of stale tool output, and the model is drowning in it.
 
-Context engineering is the art and science of filling the LLM's context window with just the right information, in the right format, at the right time to accomplish a task.
-</MultiLineNote>
+> The agent did not get dumber. Its context got noisier.
 
----
+### What Is Actually Happening
 
-## Key Differences: Context Engineering vs Prompt Engineering
+In the **Introduction to Context Engineering** session, we named this problem and its cousins:
 
-| Feature | Prompt Engineering | Context Engineering |
-|---------|-------------------|---------------------|
-| Focus | Input phrasing | System-level design |
-| Scope | One-time interaction | Multi-turn interaction |
-| Flexibility | Static | Dynamic |
-| Techniques | Text prompts, few-shot examples | Tool integration, memory, orchestration |
-| Use Cases | Text generation, Q&A | Enterprise workflows, copilots, agents |
-| ROI | High initial effort | Higher long-term scalability |
+| Failure | What the student just saw |
+|---------|--------------------------|
+| **Distraction** | The agent repeated a search it already ran (turn 7) — too much history crowding out fresh reasoning |
+| **Confusion** | It answered from the wrong city's results — irrelevant data misleading the model |
 
-While prompt engineering is excellent for prototyping or consumer-facing apps, context engineering is essential for **enterprise-grade AI** that needs to scale across departments, use cases, and data sources.
-
-### Performance Comparison: Context Engineering vs Prompt Engineering
-
-| Metric | Prompt Engineering | Context Engineering |
-|--------|-------------------|---------------------|
-| Session Recall | Low | High |
-| Personalization | Manual | Automated |
-| Error Reduction | Moderate | High |
-| Tool Access | Limited | Seamless |
-
-![A Venn diagram labelled "Everything is Context Engineering" — a large Context Engineering circle containing overlapping circles for RAG, Prompt Engineering, State / History and Memory, with Structured Outputs at the edge](assets/ce-everything-is-context-engineering.png)
-
-Think of the LLM as a CPU and the context window as RAM. Just like a computer needs the right data loaded in RAM to run programs well, your AI needs the right context to perform tasks effectively.
+We also named four techniques to fix them: **write, select, compress, isolate**. This session puts those techniques into practice — with real code, on a real agent.
 
 ---
 
-## The Context Engineering Process
+## What We Already Know (Quick Recap)
 
-Context engineering is the systems-level discipline of designing, constructing, and maintaining the informational environment (context) in which an AI model operates at runtime.
+The **Introduction to Context Engineering** session covered the concepts. Here is the vocabulary we need going forward — one line each:
 
-### Agents
+| From Session 41 | One-line reminder |
+|-----------------|-------------------|
+| **Context Engineering** | The discipline of filling the context window with the right information, in the right format, at the right time |
+| **Context Poisoning** | A wrong fact enters the context and gets reused — the agent states the same wrong thing confidently |
+| **Context Distraction** | Too much history crowds out fresh reasoning — the agent repeats actions it already took |
+| **Context Confusion** | Irrelevant tools or documents mislead the model — it calls the wrong tool |
+| **Context Clash** | Contradictory information — the agent stalls or flips between answers |
+| **Write** | Save information outside the window for later |
+| **Select** | Fetch only what the current question needs |
+| **Compress** | Summarize the old, keep the recent |
+| **Isolate** | Give each sub-agent a small, focused window |
 
-As soon as you start building real systems with large language models, you run into the limits of static pipelines. A fixed recipe of "retrieve, then generate" works fine for simple **Retrieval Augmented Generation (RAG)** setups, but it falls apart once the task requires judgment, adaptation, or multi-step reasoning.
+If any of these are unfamiliar, revisit that session before continuing. This session assumes them.
 
-This is where **Agents** come in. In the context of context engineering, agents manage how (and how well) information flows through a system. Instead of blindly following a script, agents can evaluate what they know, decide what they still need, select the right tools, and adjust their strategy when things go wrong.
+---
 
-![A user sends a prompt to an AI agent, the agent thinks, and a response returns to the user](assets/ce-agent-loop.png)
-
-Agents are both the architects of their contexts and the users of those contexts.
-
-The term "**agent**" gets used broadly, so let's define it in the context of building with large language models (LLMs). As the **Building AI Agents with LangChain** session put it, an AI agent is a system that can operate independently to achieve a goal without constant human intervention. Concretely, that means it can:
-
-* **Decide what it still needs to know** — rather than answering from whatever it was handed
-* **Choose and call a tool** to go and get it
-* **Read the result and decide what to do next** — call another tool, or answer
-* **Change strategy when something fails** instead of stopping
-
-Every one of those four steps either **adds** something to the context window or **reads** from it. That is why agents and context engineering are the same subject: an agent is a program whose main job is deciding what goes into its own next prompt.
-
-### Context for AI Agents
+## Context for AI Agents
 
 Everything an agent "knows" at any moment falls into six buckets. They all compete for the same limited window, which is why naming them matters:
 
@@ -96,72 +73,15 @@ Everything an agent "knows" at any moment falls into six buckets. They all compe
 
 ![One context window divided into six competing bands — Instructions and Examples are small and always present, Tools is fixed and easy to forget, and Knowledge, Memory and Tool results are large and grow during the task](assets/ce-six-types-of-context.png)
 
-Two of these surprise people. **Tool descriptions** sit in the window on every turn whether a tool is used or not — twenty registered tools is a permanent tax on every request. And **tool results** are the least predictable of the six: a single search can return more tokens than the entire conversation before it. Remember that second one; it is the culprit in the hands-on section later.
+Two of these surprise people. **Tool descriptions** sit in the window on every turn whether a tool is used or not — twenty registered tools is a permanent tax on every request. And **tool results** are the least predictable of the six: a single search can return more tokens than the entire conversation before it.
 
-### Strategies and Tasks for Agents
-
-An agent managing its own context has a small repertoire of moves. You do not need all of them today — the four in bold are the ones this session builds:
-
-| Strategy | What the agent does |
-|----------|--------------------|
-| **Context Summarization** | Compress accumulated history into a summary, keeping the key facts |
-| **Context Pruning** | Actively drop context that is no longer needed |
-| **Context Offloading** | Store details outside the window and fetch them only when required |
-| **Dynamic Tool Selection** | Load only the tools relevant to this task, not every tool it owns |
-| Quality Validation | Check whether retrieved information is consistent and useful |
-| Adaptive Retrieval | Reformulate the query or switch sources when the first attempt fails |
-| Multi-Source Synthesis | Combine several sources, resolving conflicts between them |
-
-![Eight agent context strategies: Context Summarization, Quality Validation, Context Pruning, Adaptive Retrieval Strategies, Context Offloading, Dynamic Tool Selection and Multi-Source Synthesis, each with a small flow diagram](assets/ce-agent-context-strategies.png)
+That second one is exactly what happened in our opening scenario. The SkillMap Agent's Tavily and JSearch results are tool output — and three rounds of them buried everything else.
 
 ---
 
-## The Problems That Appeared Using Prompt Engineering
+## Four Principles for Managing Context
 
-### 1. Information Overload
-
-In a conversation, when the user asks a question, the process typically unfolds like this:
-
-1. **Turn 1:** The user asks a question (10 tokens).
-2. **Turn 2:** The AI searches the web, gathers relevant information (500 tokens).
-3. **Turn 3:** The AI performs calculations (200 tokens).
-4. **Turn 4:** The user follows up with another question (20 tokens).
-5. **Turn 5:** The AI conducts another web search (500 tokens).
-
-This continues, and over time, as the conversation progresses through multiple turns, the context builds up to a large amount, reaching 50,000 tokens in total. At this point, the AI must manage this extensive context, which is challenging since it has **limited memory**.
-
-### 2. Context Hygiene
-
-This is one of the most critical parts of managing agentic systems. Agents don't just need memory and tools; they also need to monitor and manage the quality of their own context. That means avoiding overload, detecting irrelevant or conflicting information, pruning or compressing as needed, and keeping their in-context memory clean enough to reason effectively.
-
-Here are some common types of errors that begin to happen, or increase, as context window size grows:
-
-![Four context failure modes — Context Poisoning (hallucinated information enters and compounds), Context Distraction (the agent over-relies on past behaviour), Context Confusion (irrelevant tools or documents cause the wrong tool to be used) and Context Clash (contradictory information leaves the agent stuck)](assets/ce-context-failure-modes.png)
-
-You met these four in the **Introduction to Context Engineering** session, along with the fixes. What matters now is the practical half: **how you recognise each one in an agent you are actually running**, and which technique from this session addresses it.
-
-| Failure | What it is | What you actually see | Fix it with |
-|---------|-----------|----------------------|-------------|
-| **Poisoning** | A wrong fact enters the context and gets reused | The agent states the same wrong thing confidently, turn after turn, and re-asserts it even when corrected | Validate before writing. Never persist a fact the agent only inferred |
-| **Distraction** | Too much history crowds out fresh reasoning | It repeats an action it already did, or re-runs a search it already ran | **Compaction** — and prune old tool output first |
-| **Confusion** | Irrelevant tools or documents mislead it | It calls the wrong tool, or picks a tool that does not fit the question | Cut the tool list for the task. Sharpen tool descriptions (Principle 3) |
-| **Clash** | Two pieces of context contradict each other | It stalls, hedges, or flips between two answers across turns | Resolve on write — update the old fact, do not append a second one |
-
-Two of these are worth separating, because they look identical from the outside and have opposite fixes. **Distraction is too much context; confusion is the wrong context.** If the agent is repeating itself, you have too much history — compact. If it is reaching for the wrong tool, you have too many tools — narrow the list. Compacting a confused agent does nothing, and trimming tools from a distracted one does nothing either.
-
-### 3. Just Prompts Aren't Enough
-
-**Context Accumulates:** As the conversation continues, the context expands, including the original prompt, tool descriptions, past responses, external data, and any examples shared.
-
-**Memory Limitations:** AI has limited memory, and it can only handle so much information. Too much irrelevant or outdated context can negatively affect performance.
-
-**Focus on Relevance:** Effective context management involves prioritizing relevant information and filtering out what's unnecessary to maintain clarity.
-
-**Prompt Writing is Just One Piece:** While a clear prompt helps, the AI's performance also depends on keeping the context organized and focused. Too much clutter can disrupt its ability to respond accurately.
-
----
-
-## The Solution: How to Leverage Context Engineering
+These are the design rules. The hands-on section that follows puts them into code.
 
 ### Principle 1: Minimal High-Quality Information
 
@@ -272,136 +192,13 @@ Each tool has a clear, distinct purpose.
 
 ---
 
-## Advanced Techniques for Long Tasks
-
-When tasks are so lengthy they exceed even optimized context.
-
-### First, the Names
-
-The **Introduction to Context Engineering** session gave you four techniques: **write, select, compress, isolate**. This session works through the same four in practice, so it is worth pinning the vocabulary down before we start — the practical names and the conceptual ones are the same ideas:
-
-| Technique (Session 41) | In practice | Where in this session |
-|------------------------|-------------|----------------------|
-| **Write** context | Note-taking to a file outside the window | Technique 2, below |
-| **Select** context | Just-in-time retrieval — fetch only what the question needs | Principle 4, above |
-| **Compress** context | Compaction — summarise the old, keep the recent | Technique 1, below, and the hands-on |
-| **Isolate** context | Sub-agents — give each a small, focused window | Technique 3, below |
-
-If you only remember one thing from the mapping: **select** decides what comes *in*, and **write**, **compress** and **isolate** all decide what goes *out* — to a file, to a summary, or to another agent.
-
-### Technique 1: Compaction — *compress*
-
-**When to use:** When the task is ongoing, and the context is nearing its limit.
-
-**How it works:**
-
-1. When the context reaches about 80% of its capacity, the AI creates a summary of the entire conversation.
-2. The system then continues with just the summary and the most recent messages.
-3. This allows the AI to reset, focusing on the essential details while maintaining continuity.
-
-**Example:**
-
-**Original (5,000 tokens):**
-
-* User asked to debug code.
-* AI found 3 bugs in `database.py`.
-  * Fixed bug #1: missing null check.
-  * Fixed bug #2: incorrect query.
-* User inquired about performance.
-* AI profiled code, identified a slow function.
-  * Optimized performance using caching.
-* Many additional steps followed.
-
-**After Compaction (500 tokens):**
-
-> **Summary:** Debugging session for `database.py`
->
-> * Fixed 3 bugs (null check, query syntax, indexing).
-> * Optimized performance with caching.
-> * Current status: All tests passing.
-> * Next: User wants to add a new feature.
-
-Now, the AI works with this compact summary, allowing the task to continue efficiently without losing track of key information.
-
-### Technique 2: Note-Taking — *write*
-
-**When to use:** When the AI needs to remember details across multiple context resets.
-
-**How it works:**
-
-* The AI keeps a separate note file outside of the current context window. For example, it might create a file like `NOTES.md` to store important details.
-* This file contains:
-  * **Completed tasks**
-  * **In-progress items**
-  * **Technical decisions**
-  * **Known issues**
-* When the context resets, the AI refers to its notes and continues from where it left off.
-
-**Example of `NOTES.md`:**
-
-```markdown
-Project: E-commerce website
-
-Completed:
-- Set up database schema
-- Built user authentication
-- Created product catalog
-
-In Progress:
-- Shopping cart feature (70% done)
-- Need to add: discount code logic
-
-Technical Decisions:
-- Using PostgreSQL for the main database
-- Redis for session storage
-- Payment via Stripe API
-
-Known Issues:
-- Image upload slow (needs optimization)
-```
-
-When the context resets, the AI can read the notes and continue working from where it left off.
-
-**Real example:** For a game like *Pokémon*, an AI can keep notes on:
-
-* Pokémon levels
-* Explored areas
-* Battle strategies
-
-After a context reset, the AI reads its notes and picks up from where it left off, continuing training or exploration.
-
-### Technique 3: Sub-agents — *isolate*
-
-**When to use:** For complex tasks with distinct parts.
-
-**How it works:**
-
-* **Main AI (Coordinator):** Handles the overall task and delegates work to specialized sub-agents.
-* **Sub-agent 1: Web Research**
-  * Searches competitor websites
-  * Reads 20 articles
-  * Returns a 2-paragraph summary
-* **Sub-agent 2: Data Analysis**
-  * Queries internal database
-  * Runs statistical analysis
-  * Returns key findings in bullet points
-
-The main AI receives both summaries (with a small token count) and synthesizes the final recommendation.
-
-**Benefits:**
-
-* Sub-agents can process large amounts of data (using thousands of tokens for deep work).
-* The main AI only sees concise results, keeping the context clean and focused.
-
----
-
 ## Hands-On: Pruning and Compaction on Your Own Agent
 
 Time to do this to an agent you already have. The two techniques that pay off first are **tool-output pruning** and **compaction**, and LangChain ships both as middleware — you add them to `create_agent` without touching your tools.
 
 ### The Culprit: Retrieved Chunks
 
-Look at where the tokens actually go. A retrieval tool returns three chunks per call; three calls into a conversation, that history is almost entirely tool output:
+Look at where the tokens actually go. This is the same problem from our opening — a retrieval tool returns chunks per call, and three calls into a conversation, that history is almost entirely tool output:
 
 ```python
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
@@ -412,7 +209,7 @@ big = "Retrieved chunk. " * 200          # one tool result
 messages = [HumanMessage("start")]
 for i in range(3):
     messages.append(AIMessage(content="", tool_calls=[
-        {"name": "search_docs", "args": {"query": f"q{i}"}, "id": f"c{i}"}]))
+        {"name": "skill_demand", "args": {"query": f"q{i}"}, "id": f"c{i}"}]))
     messages.append(ToolMessage(content=big, tool_call_id=f"c{i}"))
 
 print(count_tokens_approximately(messages))
@@ -422,7 +219,7 @@ print(count_tokens_approximately(messages))
 2649
 ```
 
-Your actual question was four words. Everything else is chunks you already used.
+Your actual question was four words. Everything else is chunks you already used — exactly what buried the SkillMap Agent by turn 7.
 
 ### Technique: Tool-Output Pruning
 
@@ -469,7 +266,7 @@ from langchain.agents.middleware import (
 
 agent = create_agent(
     model=model,
-    tools=[search_docs],
+    tools=[skill_demand_tool, search_jobs],
     middleware=[
         # 1. throw away old tool output
         ContextEditingMiddleware(
@@ -508,11 +305,76 @@ That is the behaviour you want — the data is not lost, you simply stop paying 
 
 </MultiLineWarning>
 
+### The Proof: Turn 7 Works Now
+
+Go back to the scenario we opened with. The SkillMap Agent with middleware wired in:
+
+* **Turns 1–5:** The same three searches. But now, after each model response, the middleware prunes the older tool results.
+* **Turn 7:** "Which of the Bangalore roles need less than 2 years experience?"
+
+The Hyderabad results are gone — pruned after the agent moved on. The Bangalore results are intact — `keep=2` preserved them. The system prompt's formatting rules are no longer buried under 2,000 tokens of stale job listings.
+
+The agent answers from the right data, in the right format. Same agent, same tools, same model. The only change is what it sees.
+
 ### Try It Yourself
 
 1. Change `keep=1` to `keep=2` and re-run the pruning example. How many tokens now, and why?
 2. Set `trigger=100000` instead of `500`. What happens, and what does that tell you about when pruning fires?
-3. Add `exclude_tools=["search_docs"]`. Predict the result before you run it.
+3. Add `exclude_tools=["skill_demand"]`. Predict the result before you run it.
+
+---
+
+## The Four Techniques in Practice
+
+The **Introduction to Context Engineering** session gave you four techniques: **write, select, compress, isolate**. We just used two of them in code (select and compress). Here is how all four map to what you now know:
+
+| Technique | In practice | Where we used it |
+|-----------|-------------|------------------|
+| **Select** | Just-in-time retrieval — fetch only what the question needs | Principle 4 (above) |
+| **Compress** | Compaction — summarise the old, keep the recent | `SummarizationMiddleware` (above) |
+| **Write** | Note-taking to a file outside the window | Below |
+| **Isolate** | Sub-agents — give each a small, focused window | Below |
+
+If you only remember one thing from the mapping: **select** decides what comes *in*, and **write**, **compress** and **isolate** all decide what goes *out* — to a file, to a summary, or to another agent.
+
+### Note-Taking — *write*
+
+**When to use:** When the AI needs to remember details across multiple context resets.
+
+The AI keeps a separate note file outside of the current context window — for example, `NOTES.md` — containing completed tasks, in-progress items, technical decisions and known issues. When the context resets, the AI reads its notes and continues from where it left off.
+
+```markdown
+Project: E-commerce website
+
+Completed:
+- Set up database schema
+- Built user authentication
+- Created product catalog
+
+In Progress:
+- Shopping cart feature (70% done)
+- Need to add: discount code logic
+
+Technical Decisions:
+- Using PostgreSQL for the main database
+- Redis for session storage
+- Payment via Stripe API
+
+Known Issues:
+- Image upload slow (needs optimization)
+```
+
+This is exactly what the **Building Memory Agents - Long Term Memory** session built with `InMemoryStore` — the store is the agent's note file, and `save_learner_profile` is the note-taking tool.
+
+### Sub-agents — *isolate*
+
+**When to use:** For complex tasks with distinct parts.
+
+* **Main AI (Coordinator):** Handles the overall task and delegates work to specialized sub-agents.
+* **Sub-agent 1: Web Research** — Searches competitor websites, reads 20 articles, returns a 2-paragraph summary.
+* **Sub-agent 2: Data Analysis** — Queries internal database, runs statistical analysis, returns key findings in bullet points.
+
+The main AI receives both summaries (with a small token count) and synthesizes the final recommendation. Sub-agents can process large amounts of data; the main AI only sees concise results, keeping the context clean and focused.
 
 ---
 
@@ -532,21 +394,10 @@ One technique is missing from that table on purpose: **tool-output pruning**. It
 
 ## Key Takeaways
 
-**1. The Evolution**
-
-* **Prompt Engineering:** Writing good instructions.
-* **Problem:** AI needs more than just instructions.
-* **Context Engineering:** Strategically managing all information.
-
-**2. Core Principles**
-
-* Context is a **limited resource**.
-* Goal: Provide the **minimum information** for maximum effectiveness.
-* Think holistically: integrate prompts, tools, data, and history.
-
-**3. As AI improves**
-
-Less hand-holding will be required, making **context engineering** even more crucial.
+* **Context is a limited resource.** Six types compete for the same window. Tool results are the most dangerous because they are large and unpredictable.
+* **Four principles** guide what goes in: minimal information, tight system prompts, clean tool design, just-in-time retrieval.
+* **Four techniques** handle what goes out: write, select, compress, isolate. Pruning is free; compaction costs a model call — do the cheap thing first.
+* **The agent did not get dumber. Its context got noisier.** That is the sentence worth carrying out of this session.
 
 ---
 
