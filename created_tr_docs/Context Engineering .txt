@@ -1,0 +1,565 @@
+﻿Context Engineering 
+
+Let’s Understand the Problem: When Prompts Aren't Enough ?
+
+The Challenge:
+* Your agents sometimes forget important information mid-conversation
+* Performance degrades as conversations get longer
+* Relevant information gets lost in long context windows
+* Costs increase dramatically with larger prompts
+Traditional Approach (Prompt Engineering): Focus on crafting the perfect prompt with the right words and instructions.
+The Reality: Modern AI applications need more than good prompts - they need intelligent information management. That is Context Engineering 
+  
+
+
+
+Context Engineering is the discipline of designing the architecture that feeds an LLM the right information at the right time. It’s not about changing the model itself, but about building the bridges that connect it to the outside world, retrieving external data, connecting it to live tools, and giving it a memory to ground its responses in facts, not just its training data
+
+
+Compact definition 🎉
+
+Context engineering is the art and science of filling the LLM's context window with just the right information, in the right format, at the right time to accomplish a task.
+Key Differences: Context Engineering vs Prompt Engineering 
+
+
+
+
+Feature
+	Prompt Engineering
+	Context Engineering
+	Focus
+	Input phrasing
+	System-level design
+	Scope
+	One - time interaction 
+	Multi-turn interaction 
+	Flexibility
+	Static 
+	Dynamic 
+	Techniques
+	Text prompts, few-shot examples
+	Tool integration, memory, orchestration
+	Use Cases
+	Text generation, Q&A
+	Enterprise workflows, copilots, agents
+	ROI
+	High initial effort 
+	Higher long-term scalability
+	
+
+
+
+
+
+While prompt engineering is excellent for prototyping or consumer-facing apps, context engineering is essential for enterprise-grade AI that needs to scale across departments, use cases, and data sources.
+
+
+
+
+
+
+Performance Comparison : Context Engineering vs Prompt Engineering 
+
+
+
+
+Metric
+	Prompt Engineering
+	Context Engineering
+	Session Recall
+	Low
+	High
+	Personalization
+	Manual
+	Automated
+	Error Reduction
+	Moderate
+	High
+	Tool Access
+	Limited
+	Seamless
+
+
+	
+
+
+
+  
+
+Think of the LLM as a CPU and the context window as RAM. Just like a computer needs the right data loaded in RAM to run programs well, your AI needs the right context to perform tasks effectively.
+
+
+
+
+
+
+Context Engineering process 
+
+Context engineering is the systems-level discipline of designing, constructing, and maintaining the informational environment (context) in which an AI model operates at 
+runtime
+   
+Agents
+
+
+As soon as you start building real systems with large language models, you run into the limits of static pipelines. A fixed recipe of “retrieve, then generate” works fine for simple Retrieval Augmented Generation (RAG) setups, but it falls apart once the task requires judgment, adaptation, or multi-step reasoning  
+
+
+This is where Agents come in. In the context of context engineering, agents manage how (and how well) information flows through a system. Instead of blindly following a script, agents can evaluate what they know, decide what they still need, select the right tools, and adjust their strategy when things go wrong.
+
+
+  
+Agents are both the architects of their contexts and the users of those contexts
+
+
+The term "agent" gets used broadly, so let’s define it in the context of building with large language models (LLMs). An AI agent is a system that can
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Context for AI - Agents 
+
+
+  
+
+
+
+Strategies and Tasks for Agents
+
+
+  
+
+
+
+The Problems That Appeared using “ Prompt Engineering “ 
+
+
+1) Information Overload
+In a conversation, when the user asks a question, the process typically unfolds like this:
+1. Turn 1: The user asks a question (10 tokens).
+
+2. Turn 2: The AI searches the web, gathers relevant information (500 tokens).
+
+3. Turn 3: The AI performs calculations (200 tokens).
+
+4. Turn 4: The user follows up with another question (20 tokens).
+
+5. Turn 5: The AI conducts another web search (500 tokens).
+This continues, and over time, as the conversation progresses through multiple turns, the context builds up to a large amount, reaching 50,000 tokens in total. At this point, the AI must manage this extensive context, which is challenging since it has limited memory
+
+
+2) Context Hygiene
+This is one of the most critical parts of managing agentic systems. Agents don’t just need memory and tools; they also need to monitor and manage the quality of their own context. That means avoiding overload, detecting irrelevant or conflicting information, pruning or compressing as needed, and keeping their in-context memory clean enough to reason effectively.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Here are some common types of errors that begin to happen or increase as context window size grows:
+
+
+  
+
+
+
+3) Just Prompts Aren't Enough
+Context Accumulates: As the conversation continues, the context expands, including the original prompt, tool descriptions, past responses, external data, and any examples shared.
+
+Memory Limitations: AI has limited memory, and it can only handle so much information. Too much irrelevant or outdated context can negatively affect performance.
+
+Focus on Relevance: Effective context management involves prioritizing relevant information and filtering out what’s unnecessary to maintain clarity.
+
+Prompt Writing is Just One Piece: While a clear prompt helps, the AI’s performance also depends on keeping the context organized and focused. Too much clutter can disrupt its ability to respond accurately.
+The Solution - Context Engineering
+How to Leverage Context Engineering
+
+
+
+
+Principle 1: Minimal High-Quality Information
+Goal: Extract the minimum amount of high-quality information needed to complete the task.
+Think of it like packing a suitcase:
+   * Avoid packing your entire wardrobe.
+
+   * Pack only the essentials you'll actually use.
+
+   * Choose versatile items that can work in various situations.
+
+Applied to AI:
+      * Don’t include entire documents—highlight the key points.
+
+      * Don’t keep every old message—focus on summarizing the important ones.
+
+      * Don’t provide 20 examples—offer 3-5 diverse and clear ones.
+Principle 2: Smart System Prompts
+Prompt engineering is the practice of designing, refining, and optimizing inputs (prompts) given to Large Language Models (LLMs) to get your desired output. The quality and effectiveness of LLMs are heavily influenced by the prompts they receive, and the way you phrase a prompt can directly affect the accuracy, usefulness, and clarity of the response
+
+
+  
+
+Tip for effective prompting   
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Principle 3: Efficient Tool Design
+Tools are actions that AI can perform (e.g., searching the web, running code, querying a database, etc.).
+Good tools:
+         * Have one clear, specific purpose.
+
+         * Return focused, relevant information (not data dumps).
+
+         * Have descriptive names (e.g., get_current_weather rather than tool_1).
+
+         * Don’t overlap with other tools.
+
+Bad tool design:
+            * Tool 1: search_documents (searches all documents)
+
+            * Tool 2: find_files (also searches documents)
+
+            * Tool 3: query_database (can also search documents)
+
+This causes confusion for the AI about which tool to use!
+Good tool design:
+               * Tool 1: search_document_by_keyword (full-text search)
+
+               * Tool 2: get_document_by_id (retrieve a specific known document)
+
+               * Tool 3: list_recent_documents (browse recent items)
+
+Each tool has a clear, distinct purpose.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Principle 4: Smart Information Retrieval
+Traditional Approach: Pre-loading All Data
+                  1. User asks a question.
+                  2. Search all databases, documents, and files at once.
+                  3. Load everything into the system’s context.
+                  4. AI processes all available information.
+Problem:
+This approach can load large volumes of irrelevant data, occupying valuable context space and slowing down the process.
+Modern Approach: "Just in Time" Data Retrieval
+                  1. User asks a question.
+                  2. AI determines the specific information required.
+                  3. AI uses relevant tools to retrieve only the necessary data.
+                  4. AI processes the focused, relevant data.
+                  5. If more information is needed, the process repeats from step 2.
+Example:
+User: "What were our sales in Q3 2024 for Product X?"
+Old Method:
+                  * Load all sales data from 2024 (e.g., 10,000 rows).
+                  * AI sifts through all of it, wasting context space.
+New Method:
+                  * AI identifies the need for Q3 2024 data for Product X.
+                  * Tool runs a query: SELECT * FROM sales WHERE quarter='Q3' AND year=2024 AND product='X'.
+                  * Only 50 relevant rows are returned and processed by AI.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Advanced Techniques for Long Tasks
+
+
+When tasks are so lengthy they exceed even optimized context...
+Technique 1: Compaction (Summarization)
+When to use:
+When the task is ongoing, and the context is nearing its limit.
+How it works:
+                     1. When the context reaches about 80% of its capacity, the AI creates a summary of the entire conversation.
+                     2. The system then continues with just the summary and the most recent messages.
+                     3. This allows the AI to reset, focusing on the essential details while maintaining continuity.
+Example:
+Original (5,000 tokens):
+                     * User asked to debug code.
+                     * AI found 3 bugs in database.py.
+                     * Fixed bug #1: missing null check.
+                     * Fixed bug #2: incorrect query.
+                     * User inquired about performance.
+                     * AI profiled code, identified a slow function.
+                     * Optimized performance using caching.
+                     * Many additional steps followed.
+After Compaction (500 tokens):
+Summary: Debugging session for database.py
+                     * Fixed 3 bugs (null check, query syntax, indexing).
+                     * Optimized performance with caching.
+                     * Current status: All tests passing.
+                     * Next: User wants to add a new feature.
+
+
+Now, the AI works with this compact summary, allowing the task to continue efficiently without losing track of key information.
+
+
+
+
+Technique 2: Note-Taking (External Memory)
+When to use:
+ When the AI needs to remember details across multiple context resets.
+How it works:
+                     * The AI keeps a separate note file outside of the current context window. For example, it might create a file like NOTES.md to store important details.
+
+                     * This file contains:
+
+                        * Completed tasks
+
+                        * In-progress items
+
+                        * Technical decisions
+
+                        * Known issues
+
+                           * When the context resets, the AI refers to its notes and continues from where it left off.
+
+Example of Notes.md:
+Project: E-commerce website
+Completed:
+- Set up database schema
+- Built user authentication
+- Created product catalog
+
+
+In Progress:
+- Shopping cart feature (70% done)
+- Need to add: discount code logic
+
+
+Technical Decisions:
+- Using PostgreSQL for the main database
+- Redis for session storage
+- Payment via Stripe API
+
+
+Known Issues:
+- Image upload slow (needs optimization)
+When the context resets, the AI can read the notes and continue working from where it left off.
+
+
+Real example:
+ For a game like Pokémon, an AI can keep notes on:
+                              * Pokémon levels
+                              * Explored areas 
+                              * Battle strategies
+After a context reset, the AI reads its notes and picks up from where it left off, continuing training or exploration.
+Technique 3: Multiple Specialized AIs (Sub-agents)
+When to use:
+ For complex tasks with distinct parts.
+How it works:
+                                 * Main AI (Coordinator): Handles the overall task and delegates work to specialized sub-agents.
+
+                                 * Sub-agent 1: Web Research
+
+                                    * Searches competitor websites
+
+                                    * Reads 20 articles
+
+                                    * Returns a 2-paragraph summary
+
+                                       * Sub-agent 2: Data Analysis
+
+                                          * Queries internal database
+
+                                          * Runs statistical analysis
+
+                                          * Returns key findings in bullet points
+
+The main AI receives both summaries (with a small token count) and synthesizes the final recommendation.
+Benefits:
+                                             * Sub-agents can process large amounts of data (using thousands of tokens for deep work).
+
+                                             * The main AI only sees concise results, keeping the context clean and focused.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Choosing the Right Approach
+                                                1. For Simple Tasks (< 5 minutes):
+
+                                                   * Use effective prompt engineering:
+
+                                                      * Clear instructions
+
+                                                      * A few examples
+
+                                                      * Specify output format
+
+                                                         2. For Medium Tasks (5-30 minutes):
+
+                                                            * Incorporate context engineering basics:
+
+                                                               * Well-designed tools
+
+                                                               * Strategic information retrieval
+
+                                                               * Tight prompts
+
+                                                                  3. For Long Conversations (30+ minutes):
+
+                                                                     * Use compaction:
+
+                                                                        * Summarize when context fills up
+
+                                                                        * Keep the last few messages + summary
+
+                                                                           4. For Multi-Session Projects (hours/days):
+
+                                                                              * Use note-taking:
+
+                                                                                 * Persistent memory file for ongoing tasks
+
+                                                                                 * AI reads and updates the notes, maintaining context across resets
+
+                                                                                    5. For Complex Multi-Part Tasks:
+
+                                                                                       * Use sub-agents:
+
+                                                                                          * Break down the work into specialized pieces
+
+                                                                                          * Main AI synthesizes results from sub-agents
+  
+
+
+
+
+
+
+
+
+
+Key Takeaways
+                                                                                             1. The Evolution:
+
+                                                                                                * Prompt Engineering: Writing good instructions.
+
+                                                                                                * Problem: AI needs more than just instructions.
+
+                                                                                                * Context Engineering: Strategically managing all information.
+
+                                                                                                   2. Core Principles:
+
+                                                                                                      * Context is a limited resource.
+
+                                                                                                      * Goal: Provide the minimum information for maximum effectiveness.
+
+                                                                                                      * Think holistically: integrate prompts, tools, data, and history.
+
+                                                                                                         3. As AI improves: 
+Less hand-holding will be required, making context engineering even more crucial.
+
+
+Final Thoughts 
+
+
+Context engineering is about being smart with AI’s "working memory"—providing just enough of the right information, at the right time, in the right format to excel at complex, multi-step tasks.

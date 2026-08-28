@@ -5,6 +5,31 @@
 
 ---
 
+**Key Takeaways:**
+
+- **The Problem: Our Tools Do Not Travel**
+- **How MCP Actually Works**
+- **Which Primitive, and Why**
+- **What We Are Building**
+- **Heads Up: We Are Leaving Colab**
+- **Step 1: Project Setup**
+- **Step 2: The Smallest Server That Runs**
+- **Step 3: The Three Tools**
+- **Step 4: The Resource**
+- **Step 5: The Prompt**
+- **Step 6: Asking the User a Question — Elicitation**
+- **Step 7: Transports — stdio vs HTTP**
+- **Step 8: Testing With the MCP Inspector**
+- **Step 9: Structured Error Returns**
+- **Step 10: Versioning**
+- **Step 11: Connecting It to Our Own Agent**
+- **Starting Your Own Server**
+- **What We Are Not Covering**
+- **When Things Go Wrong**
+- **When Should You Build an MCP Server?**
+
+---
+
 ## Introduction
 
 In the **Integrating MCP** session we gave the SkillMap Agent a capability it did not own. We pasted a URL into `MultiServerMCPClient`, called `get_tools()`, and Tavily's search simply arrived:

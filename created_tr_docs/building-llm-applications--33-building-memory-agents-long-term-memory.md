@@ -5,6 +5,36 @@
 
 ---
 
+**Key Takeaways:**
+
+- **The Problem: A New Session Wipes Everything**
+- **What is Long-Term Memory**
+- **Why & Where Long-Term Memory is Essential**
+- **Short-Term vs Long-Term Memory**
+- **Types of Long-Term Memory**
+    - **1. Semantic Memory — What the Agent Knows**
+    - **2. Episodic Memory — What the Agent Experienced**
+    - **3. Procedural Memory — How the Agent Behaves**
+    - **Choosing the Right Type**
+- **How Long-Term Memory Works Under the Hood**
+    - **1. The Storage Layer**
+    - **2. The Write Path — How Memories Get Created**
+    - **3. The Read Path — How Memories Come Back**
+    - **4. Injection — Memory Only Matters if it Reaches the Model**
+    - **5. Long-Term Memory is NOT RAG**
+    - **6. What Can Go Wrong**
+- **Extending the SkillMap Agent with Long-Term Memory**
+- **Scaling Up: Searching Memories by Meaning**
+- **Keeping Memory Healthy**
+- **Who is the User? Identity in a Real Application**
+- **Privacy and Safety**
+- **Is the Memory Layer Working?**
+- **What Memory Costs**
+- **Going to Production**
+- **Common Failures and How to Debug Them**
+
+---
+
 ## Introduction
 
 In the previous session, **Building Memory Agents**, we gave our **SkillMap Agent** a memory. We added a `checkpointer` (`InMemorySaver`) and a `thread_id`, and suddenly the agent could follow a conversation:

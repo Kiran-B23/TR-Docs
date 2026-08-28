@@ -11,7 +11,7 @@ from mcp.server.mcpserver.exceptions import ResourceNotFoundError, ToolError
 
 logger = logging.getLogger(__name__)          # stderr — keep your own output off stdout
 
-load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+load_dotenv()
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
 RAPIDAPI_KEY = os.environ.get("RAPID_API_KEY")
 
@@ -33,7 +33,8 @@ def skill_demand(skill: str) -> str:
     try:
         r = requests.post(
             "https://api.tavily.com/search",
-            json={"api_key": TAVILY_API_KEY, "query": f"{skill} skills demand and salary 2026",
+            json={"api_key": TAVILY_API_KEY,
+                  "query": f"{skill} skills demand and salary 2026",
                   "max_results": 3, "search_depth": "basic"},
             timeout=30,
         )
@@ -57,8 +58,10 @@ def search_jobs(skill: str, location: str) -> list[dict]:
     try:
         r = requests.get(
             "https://jsearch.p.rapidapi.com/search",
-            headers={"x-rapidapi-key": RAPIDAPI_KEY, "x-rapidapi-host": "jsearch.p.rapidapi.com"},
-            params={"query": f"{skill} in {location}", "page": "1", "num_pages": "1", "country": "in"},
+            headers={"x-rapidapi-key": RAPIDAPI_KEY,
+                     "x-rapidapi-host": "jsearch.p.rapidapi.com"},
+            params={"query": f"{skill} in {location}", "page": "1",
+                    "num_pages": "1", "country": "in"},
             timeout=30,
         )
     except requests.RequestException as e:

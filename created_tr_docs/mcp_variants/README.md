@@ -4,12 +4,12 @@ Each variant applies one change on top of the previous, so you can compare any p
 
 | Variant | Change | Lines | Effect |
 |---------|--------|-------|--------|
-| [Original](../building-llm-applications--build-your-own-mcp-server.md) | — | 1569 | Baseline |
-| [variant-1](variant-1-reorder-protocol.md) | Move protocol mechanics after Step 2 | 1567 | Students write code before reading about JSON-RPC |
-| [variant-2](variant-2-cut-interview-assistant.md) | Cut Interview Assistant; open with `+` directly | 1551 | Problem section grounded in code they wrote, not a scenario they're told about |
-| [variant-3](variant-3-continuous-build.md) | Continuous build (Steps 1→7), conceptual after | 1554 | Uninterrupted build-to-payoff arc; "Going Deeper" section after |
-| [variant-4](variant-4-compress-colab-transition.md) | Compress Colab→local transition | 1536 | ~15 lines instead of ~35; keeps the key point without the venv lecture |
-| [variant-5](variant-5-all-changes.md) | Move payoff table before Final Code | 1536 | "What Changed" section is the climax; closing quote lives there |
+| [Original](../building-llm-applications--build-your-own-mcp-server.md) | — | 1594 | Baseline |
+| [variant-1](variant-1-reorder-protocol.md) | Move protocol mechanics after Step 2 | 1592 | Students write code before reading about JSON-RPC |
+| [variant-2](variant-2-cut-interview-assistant.md) | Cut Interview Assistant; open with `+` directly | 1576 | Problem section grounded in code they wrote, not a scenario they're told about |
+| [variant-3](variant-3-continuous-build.md) | Continuous build (Steps 1→7), conceptual after | 1576 | Uninterrupted build-to-payoff arc; "Going Deeper" section after |
+| [variant-4](variant-4-compress-colab-transition.md) | Compress Colab→local transition | 1558 | ~15 lines instead of ~35; keeps the key point without the venv lecture |
+| [variant-5](variant-5-all-changes.md) | Move payoff table before Final Code | 1563 | "What Changed" section is the climax; closing quote lives there |
 
 ## Variant 5 = all changes combined
 

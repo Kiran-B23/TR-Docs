@@ -7,7 +7,8 @@ Runnable code for `../building-llm-applications--build-your-own-mcp-server.md`.
     python3 -m venv .venv
     ./.venv/bin/pip install -r requirements.txt
 
-Keys are read from `../../.env` (TAVILY_API_KEY, RAPID_API_KEY).
+`server.py` is **byte-identical** to the doc's Final Code, so it expects a `.env` beside it.
+Here that is a symlink to the repo-level `../../.env` (TAVILY_API_KEY, RAPID_API_KEY).
 
 | File | What it does |
 |------|--------------|

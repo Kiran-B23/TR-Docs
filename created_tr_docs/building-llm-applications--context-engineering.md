@@ -5,7 +5,25 @@
 
 ---
 
-## The Problem: Our Agent Gets Worse the Longer You Talk to It
+**Key Takeaways:**
+
+- **The Problem: The Agent Gets Worse the Longer the Conversation Runs**
+- **What We Already Know (Quick Recap)**
+- **Context for AI Agents**
+- **Four Principles for Managing Context**
+    - **Principle 1: Minimal High-Quality Information**
+    - **Principle 2: Smart System Prompts**
+    - **Principle 3: Efficient Tool Design**
+    - **Principle 4: Smart Information Retrieval — select**
+- **Hands-On: Pruning and Compaction on the SkillMap Agent**
+- **The Four Techniques in Practice**
+    - **Note-Taking — write**
+    - **Sub-agents — isolate**
+- **Choosing the Right Approach**
+
+---
+
+## The Problem: The Agent Gets Worse the Longer the Conversation Runs
 
 In the **Building AI Agents with LangChain** session we built the SkillMap Agent. It searches for jobs, researches skill demand, and remembers the learner across sessions. Five turns in, it is doing all of that well.
 
@@ -42,7 +60,7 @@ We also named four techniques to fix them: **write, select, compress, isolate**.
 
 The **Introduction to Context Engineering** session covered the concepts. Here is the vocabulary we need going forward — one line each:
 
-| From Session 41 | One-line reminder |
+| From that session | One-line reminder |
 |-----------------|-------------------|
 | **Context Engineering** | The discipline of filling the context window with the right information, in the right format, at the right time |
 | **Context Poisoning** | A wrong fact enters the context and gets reused — the agent states the same wrong thing confidently |
@@ -89,8 +107,8 @@ These are the design rules. The hands-on section that follows puts them into cod
 
 **Think of it like packing a suitcase:**
 
-* Avoid packing your entire wardrobe.
-* Pack only the essentials you'll actually use.
+* Avoid packing the entire wardrobe.
+* Pack only the essentials that will actually be used.
 * Choose versatile items that can work in various situations.
 
 **Applied to AI:**
@@ -101,21 +119,21 @@ These are the design rules. The hands-on section that follows puts them into cod
 
 ### Principle 2: Smart System Prompts
 
-You already know how to write a good prompt — the **Effective Prompting Techniques** session covered clarity, specificity, contextual awareness, output guidance and reusable templates. Those all still apply.
+We already know how to write a good prompt — the **Effective Prompting Techniques** session covered clarity, specificity, contextual awareness, output guidance and reusable templates. Those all still apply.
 
 What changes in an agent is that the system prompt is not written once and read once. It is **re-sent on every single turn**, and that has two consequences worth designing around:
 
-* **Its tokens compound.** A 500-token system prompt across a 40-turn conversation is 20,000 tokens you paid for repeatedly. Tighten it once and you save on every turn, forever.
-* **Its instructions compete.** Every rule you add makes every other rule slightly less salient. A system prompt with thirty rules is followed less reliably than one with six.
+* **Its tokens compound.** A 500-token system prompt across a 40-turn conversation is 20,000 tokens paid for repeatedly. Tighten it once and the saving lands on every turn, forever.
+* **Its instructions compete.** Every added rule makes every other rule slightly less salient. A system prompt with thirty rules is followed less reliably than one with six.
 
-So the goal is not the most complete system prompt. It is the smallest one that still produces the behaviour you need.
+So the goal is not the most complete system prompt. It is the smallest one that still produces the behaviour we need.
 
 Two techniques are worth knowing because they work by *shaping the context* rather than rewording the instruction:
 
 ![Classic prompting techniques — Chain of Thought, which asks the model to think step by step through intermediate reasoning steps, and Few-Shot Prompting, which supplies a few worked examples in the context window](assets/ce-classic-prompting-techniques.png)
 
 * **Chain of Thought** — ask the model to reason in steps before answering. Useful exactly when retrieved documents are dense or contradict each other, because the reasoning becomes visible and checkable.
-* **Few-Shot Prompting** — put a few worked examples in the window to demonstrate the format and style you want. This is Principle 1 in action: three to five well-chosen examples beat twenty mediocre ones, and they cost fewer tokens.
+* **Few-Shot Prompting** — put a few worked examples in the window to demonstrate the format and style we want. This is Principle 1 in action: three to five well-chosen examples beat twenty mediocre ones, and they cost fewer tokens.
 
 **Tips for an agent's system prompt**
 
@@ -192,9 +210,9 @@ Each tool has a clear, distinct purpose.
 
 ---
 
-## Hands-On: Pruning and Compaction on Your Own Agent
+## Hands-On: Pruning and Compaction on the SkillMap Agent
 
-Time to do this to an agent you already have. The two techniques that pay off first are **tool-output pruning** and **compaction**, and LangChain ships both as middleware — you add them to `create_agent` without touching your tools.
+Time to apply this to the agent we already have. The two techniques that pay off first are **tool-output pruning** and **compaction**, and LangChain ships both as middleware — they are added to `create_agent` without touching the tools.
 
 ### The Culprit: Retrieved Chunks
 
@@ -219,7 +237,7 @@ print(count_tokens_approximately(messages))
 2649
 ```
 
-Your actual question was four words. Everything else is chunks you already used — exactly what buried the SkillMap Agent by turn 7.
+The actual question was four words. Everything else is chunks already used — exactly what buried the SkillMap Agent by turn 7.
 
 ### Technique: Tool-Output Pruning
 
@@ -256,7 +274,7 @@ The two older ones are gone; `keep=1` preserved the newest. Three settings do th
 
 ### Wiring It Into the Agent
 
-In a real agent you do not call `.apply()` yourself — you hand the edit to middleware and it runs before every model call:
+In a real agent we do not call `.apply()` directly — the edit is handed to middleware and it runs before every model call:
 
 ```python
 from langchain.agents import create_agent
@@ -283,7 +301,7 @@ agent = create_agent(
 ```
 
 <MultiLineNote>
-Remember the "about 80%" threshold from the compaction section? That is this, literally: `trigger=("fraction", 0.8)` means *summarise once the context is 80% full*. You can also trigger on an absolute count with `("tokens", 50000)` or on message count with `("messages", 40)`.
+`trigger=("fraction", 0.8)` means *summarise once the context is 80% full*. It can also fire on an absolute count with `("tokens", 50000)`, or on message count with `("messages", 40)`.
 
 `keep=("messages", 10)` is the other half — how much recent conversation survives the summary untouched.
 </MultiLineNote>
@@ -295,13 +313,13 @@ Pruning first, compaction second. Both shrink the context, but they cost differe
 * **Pruning is free.** It deletes text. No model call, no latency.
 * **Compaction costs a model call.** It has to read the history and write a summary.
 
-So throw away the cheap stuff first, and only pay for a summary if you are still over budget after that. Reversed, you would pay a model to summarise chunks you were about to delete anyway.
+So throw away the cheap stuff first, and only pay for a summary if the context is still over budget after that. Reversed, we would pay a model to summarise chunks that were about to be deleted anyway.
 
 <MultiLineWarning text="Pruning changes what is sent, not what is stored">
 
-The middleware edits the messages on their way **to the model**. Your saved conversation still holds the full tool results.
+The middleware edits the messages on their way **to the model**. The saved conversation still holds the full tool results.
 
-That is the behaviour you want — the data is not lost, you simply stop paying to re-send it every turn — but it means you cannot check that pruning worked by printing your stored history. Count the tokens going into the model call instead.
+That is the intended behaviour — the data is not lost, we simply stop paying to re-send it every turn — but it means pruning cannot be checked by printing the stored history. Count the tokens going into the model call instead.
 
 </MultiLineWarning>
 
@@ -319,14 +337,14 @@ The agent answers from the right data, in the right format. Same agent, same too
 ### Try It Yourself
 
 1. Change `keep=1` to `keep=2` and re-run the pruning example. How many tokens now, and why?
-2. Set `trigger=100000` instead of `500`. What happens, and what does that tell you about when pruning fires?
-3. Add `exclude_tools=["skill_demand"]`. Predict the result before you run it.
+2. Set `trigger=100000` instead of `500`. What happens, and what does that say about when pruning fires?
+3. Add `exclude_tools=["skill_demand"]`. Predict the result before running it.
 
 ---
 
 ## The Four Techniques in Practice
 
-The **Introduction to Context Engineering** session gave you four techniques: **write, select, compress, isolate**. We just used two of them in code (select and compress). Here is how all four map to what you now know:
+The **Introduction to Context Engineering** session gave us four techniques: **write, select, compress, isolate**. We just used two of them in code (select and compress). Here is how all four map to the work just done:
 
 | Technique | In practice | Where we used it |
 |-----------|-------------|------------------|
@@ -335,7 +353,7 @@ The **Introduction to Context Engineering** session gave you four techniques: **
 | **Write** | Note-taking to a file outside the window | Below |
 | **Isolate** | Sub-agents — give each a small, focused window | Below |
 
-If you only remember one thing from the mapping: **select** decides what comes *in*, and **write**, **compress** and **isolate** all decide what goes *out* — to a file, to a summary, or to another agent.
+One thing worth remembering from the mapping: **select** decides what comes *in*, and **write**, **compress** and **isolate** all decide what goes *out* — to a file, to a summary, or to another agent.
 
 ### Note-Taking — *write*
 
@@ -388,11 +406,11 @@ The main AI receives both summaries (with a small token count) and synthesizes t
 | **Multi-session projects (hours/days)** | **Note-taking** (*write*) | Persistent memory file · AI reads and updates the notes across resets |
 | **Complex multi-part tasks** | **Sub-agents** (*isolate*) | Break the work into specialized pieces · main AI synthesizes results |
 
-One technique is missing from that table on purpose: **tool-output pruning**. It is not a choice you make per task — it is close to free, so once your agent calls tools at all, leave it on.
+One technique is missing from that table on purpose: **tool-output pruning**. It is not a per-task choice — it is close to free, so once an agent calls tools at all, leave it on.
 
 ---
 
-## Key Takeaways
+## What to Carry Forward
 
 * **Context is a limited resource.** Six types compete for the same window. Tool results are the most dangerous because they are large and unpredictable.
 * **Four principles** guide what goes in: minimal information, tight system prompts, clean tool design, just-in-time retrieval.
