@@ -1,0 +1,43 @@
+<svg viewBox="0 0 800 360" width="100%" style="max-width:800px;height:auto;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif" role="img" aria-label="Four techniques around the context window. Select is the only one that puts information in, retrieving just what the question needs. Write sends facts out to a store, compress replaces old turns with a summary, and isolate hands a sub-task to another agent that returns only its conclusion.">
+  <title>Four techniques: one lets information in, three take it out</title>
+  <defs>
+    <marker id="ain" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#059669"/></marker>
+    <marker id="aout" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="400" y="26" text-anchor="middle" font-size="17" font-weight="600" fill="#334155">One technique lets information in. Three take it out.</text>
+
+  <!-- the window -->
+  <rect x="300" y="120" width="200" height="128" rx="10" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+  <text x="400" y="176" text-anchor="middle" font-size="15" font-weight="700" fill="#334155">the context</text>
+  <text x="400" y="198" text-anchor="middle" font-size="15" font-weight="700" fill="#334155">window</text>
+
+  <!-- SELECT: in, from the left -->
+  <rect x="40" y="146" width="180" height="76" rx="8" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+  <text x="130" y="172" text-anchor="middle" font-size="14.5" font-weight="700" fill="#047857">SELECT</text>
+  <text x="130" y="192" text-anchor="middle" font-size="12.5" fill="#334155">retrieve only what</text>
+  <text x="130" y="208" text-anchor="middle" font-size="12.5" fill="#334155">this question needs</text>
+  <line x1="224" y1="184" x2="292" y2="184" stroke="#059669" stroke-width="2.5" marker-end="url(#ain)"/>
+
+  <!-- WRITE: out, top right -->
+  <rect x="580" y="52" width="180" height="62" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="670" y="76" text-anchor="middle" font-size="14.5" font-weight="700" fill="#4338ca">WRITE</text>
+  <text x="670" y="97" text-anchor="middle" font-size="12.5" fill="#334155">to a store, for later</text>
+  <line x1="500" y1="150" x2="572" y2="96" stroke="#4f46e5" stroke-width="2.5" marker-end="url(#aout)"/>
+
+  <!-- COMPRESS: out, middle right -->
+  <rect x="580" y="152" width="180" height="62" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="670" y="176" text-anchor="middle" font-size="14.5" font-weight="700" fill="#4338ca">COMPRESS</text>
+  <text x="670" y="197" text-anchor="middle" font-size="12.5" fill="#334155">prune it, or summarise it</text>
+  <line x1="500" y1="184" x2="572" y2="184" stroke="#4f46e5" stroke-width="2.5" marker-end="url(#aout)"/>
+
+  <!-- ISOLATE: out, bottom right -->
+  <rect x="580" y="252" width="180" height="62" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="670" y="276" text-anchor="middle" font-size="14.5" font-weight="700" fill="#4338ca">ISOLATE</text>
+  <text x="670" y="297" text-anchor="middle" font-size="12.5" fill="#334155">to a sub-agent's own window</text>
+  <line x1="500" y1="218" x2="572" y2="272" stroke="#4f46e5" stroke-width="2.5" marker-end="url(#aout)"/>
+
+  <text x="400" y="288" text-anchor="middle" font-size="12.5" fill="#64748b">the only thing that</text>
+  <text x="400" y="304" text-anchor="middle" font-size="12.5" fill="#64748b">has to stay small</text>
+
+  <text x="400" y="344" text-anchor="middle" font-size="13.5" fill="#64748b">Every fix is one of these four. Most of the work is deciding what leaves.</text>
+</svg>

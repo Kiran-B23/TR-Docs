@@ -1,0 +1,35 @@
+<svg viewBox="0 0 800 348" width="100%" style="max-width:800px;height:auto;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif" role="img" aria-label="Context after each SkillMap turn: 696, 1290 and 1897 tokens. Tool output is the part that grows, reaching 80 percent of the window by turn 3, while the system prompt and messages stay flat at 362 tokens.">
+  <title>Where the context goes, turn by turn</title>
+  <text x="400" y="26" text-anchor="middle" font-size="17" font-weight="600" fill="#334155">Three questions to the SkillMap Agent</text>
+
+  <!-- axis -->
+  <line x1="92" y1="270" x2="742" y2="270" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="84" y="274" text-anchor="end" font-size="12" fill="#64748b">0</text>
+  <text x="84" y="138" text-anchor="end" font-size="12" fill="#64748b">tokens</text>
+
+  <!-- turn 1: total 696, tool 334 -->
+  <rect x="140" y="214" width="118" height="56" rx="3" fill="#e0e7ff" stroke="#6366f1"/>
+  <rect x="140" y="158" width="118" height="56" rx="3" fill="#fecaca" stroke="#ef4444"/>
+  <text x="199" y="290" text-anchor="middle" font-size="13" font-weight="600" fill="#334155">Turn 1</text>
+  <text x="199" y="148" text-anchor="middle" font-size="13" font-weight="600" fill="#334155">696</text>
+
+  <!-- turn 2: total 1290 -->
+  <rect x="330" y="214" width="118" height="56" rx="3" fill="#e0e7ff" stroke="#6366f1"/>
+  <rect x="330" y="110"  width="118" height="104" rx="3" fill="#fecaca" stroke="#ef4444"/>
+  <text x="389" y="290" text-anchor="middle" font-size="13" font-weight="600" fill="#334155">Turn 2</text>
+  <text x="389" y="100" text-anchor="middle" font-size="13" font-weight="600" fill="#334155">1290</text>
+
+  <!-- turn 3: total 1897 -->
+  <rect x="520" y="214" width="118" height="56" rx="3" fill="#e0e7ff" stroke="#6366f1"/>
+  <rect x="520" y="62"  width="118" height="152" rx="3" fill="#fecaca" stroke="#ef4444" stroke-width="2"/>
+  <text x="579" y="290" text-anchor="middle" font-size="13" font-weight="600" fill="#334155">Turn 3</text>
+  <text x="579" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#b91c1c">1897</text>
+
+  <!-- callouts -->
+  <text x="662" y="130" font-size="12.5" font-weight="700" fill="#b91c1c">tool output</text>
+  <text x="662" y="147" font-size="12.5" fill="#b91c1c">1535 = 80%</text>
+  <text x="662" y="240" font-size="12.5" font-weight="600" fill="#4f46e5">prompt + messages</text>
+  <text x="662" y="257" font-size="12.5" fill="#4f46e5">362, flat</text>
+
+  <text x="400" y="326" text-anchor="middle" font-size="13.5" fill="#64748b">The learner's questions never got bigger. Only the tool results the learner had finished with.</text>
+</svg>

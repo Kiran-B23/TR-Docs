@@ -21,8 +21,8 @@ Four diagrams used by `../building-llm-applications--build-your-own-mcp-server.m
 | `mcp-transports.png` | Step 6 → Transports: stdio vs HTTP |
 | `mcp-error-paths.png` | Step 8 → Structured Error Returns |
 
-## Context Engineering in Practice
-Seven diagrams used by `../building-llm-applications--context-engineering.md`.
+## Context Engineering (old doc, set aside)
+Seven diagrams referenced by `../building-llm-applications--context-engineering.md`.
 
 | File | Used in section | Source |
 |------|-----------------|--------|
@@ -60,3 +60,20 @@ containing a space silently renders a broken-image icon in headless Chrome:
 
 Sizes: namespace-key-value 740x152 · write-path 780x150 · read-path 780x150 ·
 agent-context-loop 860x335 · mcp-wire-messages 800x372
+
+
+## Context Engineering in Practice
+Five diagrams used by `../building-llm-applications--context-engineering-in-practice.md`.
+All authored here — no third-party images, no licensing to confirm.
+
+| File | Used in section | Source | Render size |
+|------|-----------------|--------|-------------|
+| `ce-context-growth.png` | The Problem | **ours** — `ce-context-growth.svg` | 800x348 |
+| `ce-six-types-of-context.png` | The Context Stack | **ours** — reused, `ce-six-types-of-context.svg` | 800x400 |
+| `ce-failure-modes.png` | How Context Fails | **ours** — `ce-failure-modes.svg` | 800x340 |
+| `ce-four-techniques.png` | The Four Techniques | **ours** — `ce-four-techniques.svg` | 800x360 |
+| `ce-pruning-before-after.png` | Hands-On → Technique 1 | **ours** — `ce-pruning-before-after.svg` | 800x330 |
+
+`ce-context-growth` and `ce-pruning-before-after` carry live figures from
+`../ce_code/skillmap_context_lab.py` (696/1290/1897, 1535 = 80%, 1897 -> 677 = 64%). If that
+script's numbers change, re-render both.

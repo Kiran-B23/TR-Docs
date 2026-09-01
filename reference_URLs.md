@@ -219,3 +219,49 @@ Findings from the same review that testing **did** support, and which were appli
 broad `except Exception` without logging or chaining, the rename demo not actually
 showing discovery, the missing `.gitignore`, and no mention of tool descriptions and
 tool output as untrusted input.
+
+---
+
+## 8. Context Engineering in Practice — sources
+
+For `created_tr_docs/building-llm-applications--context-engineering-in-practice.md`.
+The doc itself carries a plain **Further Reading** list with no in-body attribution — this
+section is where the mapping of source to content lives.
+
+| Source | What came from it |
+|---|---|
+| https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents | "Smallest set of high-signal tokens" goal; compaction, note-taking, sub-agents, just-in-time retrieval |
+| https://research.trychroma.com/context-rot | The term **context rot** and the benchmarking behind it. Originates here; the Anthropic guide cites it rather than coining it |
+| https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html | The four failure modes: poisoning, distraction, confusion, clash. Originates here |
+| https://www.langchain.com/blog/context-engineering-for-agents | The **write / select / compress / isolate** framework; relays Breunig's four failure modes |
+| https://www.promptingguide.ai/guides/context-engineering-guide | Component breakdown feeding the Context Stack table |
+| https://aiengineeringfromscratch.com/lesson?path=phases%2F11-llm-engineering%2F05-context-engineering&learningPath=agentic-ai-engineer | Token budgeting across components; overflow strategies |
+| https://docs.langchain.com/oss/python/langchain/middleware | `ContextEditingMiddleware`, `ClearToolUsesEdit`, `SummarizationMiddleware` signatures |
+
+**Terminology note:** no source uses the phrase **"context stack"**. Each enumerates the parts of
+the window under its own naming — LangChain: instructions / knowledge / tools; Prompting Guide:
+system prompt, instructions, user input, structured I/O, tools, RAG & memory, state/history;
+Anthropic: system prompts, tools, examples, message history, external data. The doc's table is a
+synthesis, presented as the lesson rather than as a citation.
+
+**Empirical source of truth:** every token count in the doc is produced and asserted by
+`created_tr_docs/ce_code/skillmap_context_lab.py`.
+Verified on `langchain 1.3.17`, `langchain-core 1.6.0`, `langgraph 1.2.11`,
+`langchain-google-genai 4.3.5`, `langchain-tavily 0.2.18`, Python 3.12.3.
+
+| Claim in doc | Verified |
+|---|---|
+| Context grows 696 → 1290 → 1897 tokens over three SkillMap turns | Yes |
+| Tool output is 1535 tokens = 80% of the window at turn 3 | Yes |
+| `ClearToolUsesEdit(trigger=500, keep=1)` gives 1897 → 677 | Yes |
+| `ClearToolUsesEdit` defaults `trigger=100000`, `keep=3`, `exclude_tools=()` | Yes, from `inspect.signature` |
+| `SummarizationMiddleware` default `keep=("messages", 20)` | Yes |
+| `trigger` accepts both `("tokens", N)` and `("fraction", 0.8)` | Yes, both instantiate |
+| `create_agent` accepts `middleware=` | Yes |
+| Pruning edits messages to the model; stored history keeps full tool results | Yes — see `ce_code/README.md` |
+
+**Middleware ordering**, checked by running an agent with both list orders and logging which hook
+fired first: `SummarizationMiddleware` implements `before_model`, `ContextEditingMiddleware`
+implements `wrap_model_call`, and the before-model hook runs first either way. Re-check if the
+middleware base class changes. (Moved here from the doc — it is author provenance, not student
+content.)

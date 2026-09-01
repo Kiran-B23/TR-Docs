@@ -1,0 +1,37 @@
+<svg viewBox="0 0 800 330" width="100%" style="max-width:800px;height:auto;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif" role="img" aria-label="Before pruning, all six tool results sit in the window at 1897 tokens. After ClearToolUsesEdit with keep equals 1, the five older tool results become the placeholder cleared and only the newest survives, leaving 677 tokens. Questions and answers are untouched.">
+  <title>Tool-output pruning, before and after</title>
+  <text x="400" y="26" text-anchor="middle" font-size="17" font-weight="600" fill="#334155">ClearToolUsesEdit(trigger=500, keep=1)</text>
+
+  <text x="176" y="56" text-anchor="middle" font-size="14" font-weight="700" fill="#b91c1c">before — 1897 tokens</text>
+  <text x="624" y="56" text-anchor="middle" font-size="14" font-weight="700" fill="#047857">after — 677 tokens</text>
+
+  <!-- BEFORE column -->
+  <g font-size="12">
+    <rect x="46" y="68"  width="260" height="24" rx="3" fill="#f1f5f9" stroke="#94a3b8"/><text x="56" y="85" fill="#475569">system prompt</text>
+    <rect x="46" y="96"  width="260" height="24" rx="3" fill="#e0e7ff" stroke="#6366f1"/><text x="56" y="113" fill="#3730a3">turn 1 · question</text>
+    <rect x="46" y="124" width="260" height="26" rx="3" fill="#fecaca" stroke="#ef4444"/><text x="56" y="142" fill="#991b1b">turn 1 · tool results (2 calls)</text>
+    <rect x="46" y="154" width="260" height="24" rx="3" fill="#e0e7ff" stroke="#6366f1"/><text x="56" y="171" fill="#3730a3">turn 2 · question</text>
+    <rect x="46" y="182" width="260" height="26" rx="3" fill="#fecaca" stroke="#ef4444"/><text x="56" y="200" fill="#991b1b">turn 2 · tool results (2 calls)</text>
+    <rect x="46" y="212" width="260" height="24" rx="3" fill="#e0e7ff" stroke="#6366f1"/><text x="56" y="229" fill="#3730a3">turn 3 · question</text>
+    <rect x="46" y="240" width="260" height="26" rx="3" fill="#fecaca" stroke="#ef4444" stroke-width="2"/><text x="56" y="258" fill="#991b1b">turn 3 · tool results (2 calls)</text>
+  </g>
+
+  <!-- arrow -->
+  <defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#334155"/></marker></defs>
+  <line x1="330" y1="167" x2="466" y2="167" stroke="#334155" stroke-width="2.5" marker-end="url(#ar)"/>
+  <text x="398" y="158" text-anchor="middle" font-size="12.5" font-weight="600" fill="#334155">64% smaller</text>
+
+  <!-- AFTER column -->
+  <g font-size="12">
+    <rect x="494" y="68"  width="260" height="24" rx="3" fill="#f1f5f9" stroke="#94a3b8"/><text x="504" y="85" fill="#475569">system prompt</text>
+    <rect x="494" y="96"  width="260" height="24" rx="3" fill="#e0e7ff" stroke="#6366f1"/><text x="504" y="113" fill="#3730a3">turn 1 · question</text>
+    <rect x="494" y="124" width="260" height="26" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="4 3"/><text x="504" y="142" fill="#94a3b8">[cleared]</text>
+    <rect x="494" y="154" width="260" height="24" rx="3" fill="#e0e7ff" stroke="#6366f1"/><text x="504" y="171" fill="#3730a3">turn 2 · question</text>
+    <rect x="494" y="182" width="260" height="26" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="4 3"/><text x="504" y="200" fill="#94a3b8">[cleared]</text>
+    <rect x="494" y="212" width="260" height="24" rx="3" fill="#e0e7ff" stroke="#6366f1"/><text x="504" y="229" fill="#3730a3">turn 3 · question</text>
+    <rect x="494" y="240" width="260" height="26" rx="3" fill="#dcfce7" stroke="#059669" stroke-width="2"/><text x="504" y="258" fill="#047857">turn 3 · tool results — kept</text>
+  </g>
+
+  <text x="400" y="294" text-anchor="middle" font-size="13" fill="#64748b">Questions and answers are untouched. Only the tool results the learner has moved past are cleared.</text>
+  <text x="400" y="316" text-anchor="middle" font-size="12.5" font-style="italic" fill="#a16207">The stored history still holds all six — pruning edits what the model sees, not what is saved.</text>
+</svg>
