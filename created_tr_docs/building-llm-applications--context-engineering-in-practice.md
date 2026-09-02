@@ -7,107 +7,184 @@
 
 **Key Takeaways:**
 
-- **The Problem: The Agent Gets Worse the Longer We Talk to It**
-- **Why This Happens**
+- **The Problem: A Long Conversation Makes the Agent Worse**
+- **How the Context Window Actually Works**
+    - **The Window Has Two Limits**
+    - **What Follows From This**
 - **What Context Engineering Is**
-- **The Context Stack**
 - **Context Engineering vs Prompt Engineering**
+- **The Context Stack**
+- **Memory Is Not Context**
 - **How Context Fails**
+    - **Context Poisoning**
+    - **Context Distraction**
+    - **Context Confusion**
+    - **Context Clash**
 - **The Four Techniques**
-- **Hands-On: Pruning and Compaction on the SkillMap Agent**
-    - **Step 0: Set Up**
-    - **Step 1: Where We Left Off**
-    - **Step 2: Measure the Context**
-    - **Step 3: Add Tool-Output Pruning**
-    - **Step 4: Check What Pruning Broke**
-    - **Step 5: Add Compaction**
-    - **Step 6: Wire Both Into the Agent**
-    - **Step 7: The Proof — Ask Turn 4 Again**
-    - **Try It Yourself**
-- **Overflow Strategies in Depth**
-- **Isolating Work with Sub-Agents**
+- **Four Principles for Managing Context**
+    - **Principle 1: Minimal High-Quality Information**
+    - **Principle 2: Smart System Prompts**
+    - **Principle 3: Efficient Tool Design**
+    - **Principle 4: Smart Information Retrieval**
+- **How to Tell If It Worked**
 - **Choosing the Right Approach**
 
 ---
 
 # Introduction
 
-In the previous units we built the **SkillMap Agent** with LangChain and Google Gemini. We gave
-it tools for researching skill demand and finding jobs, then added memory so it recognises a
-learner across sessions. Every one of those additions put more information in front of the model.
+In the previous units we built the **SkillMap Agent** with LangChain and Google Gemini. We gave it
+tools for researching skill demand and finding jobs, then added memory so it recognises a learner
+across sessions. Each addition put more information in front of the model.
 
-Now in this unit, we will look at what that information costs. We will watch a working agent get
-worse as its context fills. We will name the four ways context fails, and the four techniques for
-managing it: write, select, compress and isolate. Then we will apply two of them to the SkillMap
-Agent.
+Now in this unit, we will look at what all that information does to the model. We will watch a
+working agent get worse as its context fills, see why that happens, and then meet **context
+engineering** — the discipline of managing what the model reads. We will cover the four ways
+context fails, and the four techniques and four principles for handling it.
 
 ---
 
-# The Problem: The Agent Gets Worse the Longer We Talk to It
+# The Problem: A Long Conversation Makes the Agent Worse
 
-Three questions to the SkillMap Agent, one after another:
+Let's give the SkillMap Agent a harder test than usual. Not one question — four, in the same
+conversation, the way a real learner would use it.
 
-* **Turn 1** — "Find me Generative AI jobs in Hyderabad" → 5 openings.
-* **Turn 2** — "Now AI Engineer roles in Bangalore" → 5 more.
-* **Turn 3** — "And Machine Learning in Pune" → 5 more.
+**Turn 1**
 
-Every answer is correct. But every tool result from every earlier turn is still in the
-conversation. All of it is re-sent to the model on each new turn.
+* **User**: "Find me Generative AI jobs in Hyderabad"
+* **Agent**: *Researches demand, lists 5 openings with companies and apply links.*
 
-![Context after each SkillMap turn: 696, 1290 and 1897 tokens. Tool output is the part that grows, reaching 80 percent of the window by turn 3, while the system prompt and messages stay flat at 362 tokens](assets/ce-context-growth.png)
+**Turn 2**
 
-By turn 3, four fifths of what the model reads is search results the learner has already moved
-past.
+* **User**: "Now AI Engineer roles in Bangalore"
+* **Agent**: *Lists 5 more.*
 
-Now ask a fourth question — one that depends on remembering turn 3:
+**Turn 3**
 
-> **Turn 4** — "Of the Pune roles you just listed, which need less than 2 years experience?"
+* **User**: "And Machine Learning in Pune"
+* **Agent**: *Lists 5 more.*
 
-This is the question the rest of the session is about. Everything the agent needs is already in
-its window, so it should be easy. Instead the agent starts to slip: it re-runs a search it
-already ran, or answers about Bangalore, or drops the formatting rule from its system prompt.
+Perfect. The agent is doing exactly its job.
+
+**Turn 4** — and this is the one that matters:
+
+* **User**: "Of the Pune roles you just listed, which need less than 2 years experience?"
+* **Agent**: *Runs the Pune search again from scratch. Or answers about Bangalore. Or drops the
+  formatting rule it has followed for three turns.*
+
+Everything the agent needs is already in its window. It just listed those roles. And yet.
+
+## Why This Happens
+
+Nothing broke. The tools work, the prompt is unchanged, the model is the same. What changed is how
+much the model has to read to answer:
+
+| | Turn 1 | Turn 4 |
+|---|---|---|
+| The question | One line | One line |
+| The system prompt | Unchanged | Unchanged |
+| **Tool results in the window** | **One search** | **Three searches, all re-sent** |
+
+Every tool result from every earlier turn is still in the conversation, and all of it goes to the
+model again on every new turn. By turn 3, **four fifths of what the model reads is search results
+the learner has already moved past.**
 
 > The agent did not get worse at its job. Its context got noisier.
 
-Hold on to that fourth question. **Step 7** asks it again, after we have fixed the window.
-
----
-
-# Why This Happens
-
-That growth costs us three things at once, and the slip we just saw is only the first.
-
-| Cost | Why | What it looks like |
-|------|-----|--------------------|
-| **Accuracy falls** | Attention is finite and spread across whatever we hand the model. One page and it reads every line; fifty pages and everything is skimmed. This decline as the window fills is called **context rot** | A preference stated on turn 2 carries less weight by turn 8 |
-| **Cost rises every turn** | The whole context is re-sent on every call, so we pay for turn 1 again on turn 3 | The bill grows even when the questions do not |
-| **Latency rises** | More input to read before the first word comes back | Every turn is slower than the last |
-
-None of this announces itself. There is no error. The agent keeps answering, just less well, and
-it gets slower and dearer while doing so.
-
 <MultiLineNote>
 
-**More context does not mean better performance.** There is no single safe token limit — the
-drop-off depends on the model and the task. A focused 300-token context can outperform an
-unfocused 100,000-token one.
+**This is measured, not anecdotal.** Give a model a task all at once, then give it the same task
+revealed turn by turn, and performance falls **39% on average** across six generation tasks — a
+result that held for all 15 models tested, over 200,000 simulated conversations.
 
-<a href="https://research.trychroma.com/context-rot" target="_blank">https://research.trychroma.com/context-rot</a>
+The interesting part is *how* it falls. Best-case ability drops only 15% — the model is barely
+less capable. What rises is **unreliability, by 112%**. The same question can go well or badly
+depending on what the conversation has accumulated. As the study puts it: when models take a wrong
+turn, *they get lost and do not recover*.
 
 </MultiLineNote>
 
 ---
 
+# How the Context Window Actually Works
+
+Behind that failure is one fact about how models work, and everything in this session follows
+from it.
+
+**An LLM remembers nothing between calls.** Each request is a blank slate. When the agent answers
+turn 4, it is not recalling turn 1 — it is being *shown* turn 1 again, as text, along with
+everything else that happened.
+
+That is why the conversation grows. Nothing is being remembered. Everything is being re-sent.
+
+> The window is not the model's short-term memory. It is the model's entire world for one call.
+
+## The Window Has Two Limits
+
+Everything sent to the model is counted in **tokens** — the pieces text is split into, which we
+met in the **Understanding How LLMs Work** session. The window is measured in them, and it has two
+different ceilings.
+
+**The hard limit** is the model's maximum. Go past it and nothing degrades gracefully: the request
+is rejected, or the client silently drops the oldest messages to make it fit. Either way the agent
+stops behaving predictably, and the second case is worse because nothing tells us it happened.
+
+**The soft limit** arrives much earlier, and it is the one that matters day to day. Accuracy
+declines steadily as the window fills — attention is finite and spread across whatever we hand the
+model. One page and it reads every line; fifty pages and everything gets skimmed. This decline has
+a name: **context rot**.
+
+It also has a shape. In the memory session we met **Lost in the Middle**: as input grows, models
+reliably pay *less* attention to what sits in the middle of it. The beginning and the end are read
+carefully; the middle is skimmed. A fact does not just compete for space — it competes for
+position.
+
+<MultiLineNote>
+
+There is no safe token limit to design against. The drop-off depends on the model and the task. A
+focused 300-token context can outperform an unfocused 100,000-token one.
+
+</MultiLineNote>
+
+## What Follows From This
+
+Two consequences, and together they are the whole subject:
+
+* **If it is not in the window, the model cannot use it.** No amount of clever prompting recovers
+  a fact we left out.
+* **If it is in the window, it takes space and attention from everything else** — including three
+  turns of stale search results nobody asked about.
+
+So the window is a budget with a failure at each end. Leave things out and the model cannot
+answer. Put everything in and it answers badly, long before it runs out of room. Landing between
+the two is not something the model does for us — it is a system we have to build.
+
+Building that system has a name, and it is the subject of this session: **context engineering**.
+
+---
+
 # What Context Engineering Is
 
-Managing that growth deliberately, rather than letting it accumulate, is what the discipline is.
+**Context engineering is filling the model's window with just the right information, in the right
+format, at the right time to accomplish the task.**
 
-* **Context** — everything the model sees on one call: system prompt, tool definitions, the
-  conversation so far, retrieved documents, and the current question.
-* **Context engineering** — filling that window with **just the right information, in the right
-  format, at the right time** to accomplish the task.
+It is not prompt writing done more carefully. A prompt is written once, by a person. Context is
+assembled fresh on every single call, by the system — and on turn 40 nobody is choosing what goes
+into it unless we built something that chooses.
 
-The term is new; the idea is not. It is the same problem an operating system solves:
+Three things are packed into that sentence, and each is a separate decision:
+
+* **The right information** — what goes in, and what stays out.
+* **The right format** — how it is laid out, so the model can find what it needs inside it.
+* **The right time** — when it enters the window, and when it leaves.
+
+In plain terms: **it is deciding what the model gets to read, every time it reads.**
+
+> Not the most context. Not the least. The most useful context per token spent.
+
+## Why It Is Called Engineering
+
+The term is new; the problem is old. An operating system has faced it for decades:
 
 | Computer | AI agent |
 |----------|----------|
@@ -115,106 +192,170 @@ The term is new; the idea is not. It is the same problem an operating system sol
 | RAM — limited | The context window — limited |
 | The OS, deciding what is loaded into RAM | **Context engineering** |
 
-An LLM with the wrong things loaded behaves like a machine short on RAM. It still runs. It just
-does far less useful work.
+A computer with the wrong things in RAM still runs. It just spends its time swapping instead of
+working. Our agent on turn 4 was doing the same thing — still answering, but reading three
+searches' worth of stale results to do it.
 
-> The goal is the **smallest set of high-signal tokens that still gets the job done**. Not the
-> most context. Not the least. The most useful context per token spent.
+The analogy also sets the expectation. No operating system solves memory once and stops. It
+decides continuously, as programs load and close. This is the same kind of job.
 
-<MultiLineNote>
+## But Windows Are Huge Now
 
-Context engineering is not a new tool to install. It is a set of decisions about information. We
-make them with things we already have: a system prompt, a tool, a store, or a piece of
-**middleware**. Middleware is code that sits between the agent and the model. The Hands-On
-section uses it.
+A fair question at this point:
 
-</MultiLineNote>
+> "Models take a million tokens now. Why manage the window at all — why not put everything in?"
 
----
+Three reasons:
 
-# The Context Stack
-
-If context is everything the model sees, it is worth knowing what "everything" is made of. The
-window is a stack of parts competing for one space.
-
-![One context window divided into six competing bands — instructions and examples are small and always present, tool descriptions are fixed and easy to forget, and knowledge, memory and tool results are large and grow during the task](assets/ce-six-types-of-context.png)
-
-Two things follow:
-
-* **Only some layers grow.** The system prompt is the same size on turn 30 as on turn 1. Tool
-  descriptions are fixed, but sent every turn whether used or not — twenty tools is a standing
-  tax. Conversation history, and inside it tool output, is what runs away.
-* **The layers are not equally valuable per token.** The system prompt is small and shapes every
-  answer. A stale search result is large and shapes nothing. That ratio decides what to cut.
+* **Accuracy falls long before the window is full.** That is context rot, and it starts early.
+* **Everything in the window competes.** A stale search result does not sit quietly beside the
+  system prompt — it takes attention away from it.
+* **A bigger window raises the ceiling, not the quality.** It changes how much noise the agent can
+  carry, not how well it reasons through it.
 
 ---
 
 # Context Engineering vs Prompt Engineering
 
-The system prompt is one band in that stack — which places prompt engineering inside context
-engineering, not against it. The difference is scope and timing.
+Prompt engineering sits inside context engineering, not against it. The system prompt is one part
+of the window; context engineering is about the whole window.
 
 | | Prompt Engineering | Context Engineering |
 |---|---|---|
-| What it shapes | The wording of an instruction | Everything in the window |
-| When it happens | Once, when we write the prompt | Repeatedly, on every model call |
-| What changes it | A human editing text | The system, at runtime |
-| Typical question | "How do I phrase this?" | "What does the model need right now?" |
-| Fails when | The instruction is unclear | The window is full of the wrong things |
+| What it shapes | The wording of an instruction | Everything the model sees |
+| When it happens | Once, when we write it | On every model call |
+| Who does it | A person, editing text | The system, at runtime |
+| The question it asks | "How do I phrase this?" | "What does the model need right now?" |
+| It fails when | The instruction is unclear | The window is full of the wrong things |
 
-A one-shot call — summarise this paragraph, classify this review — is a prompt engineering
-problem. An agent is different: it runs many model calls, each carrying whatever the previous
-ones left behind. Nobody writes that input by hand, so if we do not decide what it holds, it
-simply accumulates.
+Reach for **prompt engineering** on one-shot work: summarise this paragraph, classify this review,
+translate this page. The prompt is the whole input, so better wording gives a better answer.
 
-| Reach for prompt engineering | Reach for context engineering |
-|---|---|
-| Simple chatbot conversations | Building agents or applications |
-| One-shot Q&A | Tasks needing memory across conversations |
-| Summarisation or translation | Systems calling tools or databases |
-| Quick factual queries | Complex, multi-step workflows and production apps |
+Reach for **context engineering** when the model is called repeatedly and each call inherits what
+the last one left behind — agents, memory across sessions, tool use, multi-step workflows.
 
 > Prompt engineering asks what we say to the model. Context engineering asks what the model is
 > looking at when we say it.
 
 ---
 
+# The Context Stack
+
+Everything in the window competes for the same space. It helps to see it as layers:
+
+| Layer | What it holds | Grows over time? |
+|-------|---------------|------------------|
+| **System prompt** | Role, rules, output format | No — fixed size |
+| **Tool definitions** | Names, descriptions and schemas of every bound tool | No, but every tool added is permanent |
+| **Retrieved knowledge** | RAG chunks, documents, search results | Yes |
+| **Memory** | Facts carried across sessions | Yes |
+| **Conversation history** | Every question, answer and tool result so far | **Yes — fastest** |
+| **Current input** | The question just asked | No |
+
+Two things follow.
+
+**Only some layers grow.** The system prompt is the same size on turn 30 as on turn 1. Tool
+descriptions are fixed too — but they are sent every turn whether used or not, so twenty tools is
+a standing tax. Conversation history, and inside it tool output, is what runs away.
+
+**The layers are not equally valuable per token.** The system prompt is small and shapes every
+answer. A stale search result is large and shapes nothing.
+
+> When the window gets tight, that ratio decides what to cut.
+
+---
+
+# Memory Is Not Context
+
+Memory is a layer in that stack, and it is the one most easily confused with the window itself.
+The memory session made half the point already: a new `thread_id` starts empty, so anything that
+must survive has to live outside the conversation.
+
+**Memory is what the agent stores. Context is what the model reads.**
+
+| | Memory | Context |
+|---|---|---|
+| Where it lives | A store, outside the model | The window, inside one call |
+| Lifespan | Across sessions | One call |
+| Size | Effectively unlimited | Fixed and small |
+| When the model sees it | Only when something retrieves it and puts it in the window | Always — all of it, every call |
+
+The relationship runs one way. **A fact in the store changes nothing until something selects it
+and places it in the window.** A store full of perfect facts about the learner has no effect on an
+answer that never retrieves them.
+
+That is what this session adds to the memory session. Memory is not an alternative to managing the
+window — it is one of the tools for managing it. Writing a fact to the store is how we get it
+*out* of the window while keeping it reachable.
+
+> A bigger window lets an agent read more. Memory lets an agent know more. Only what is read
+> changes the answer.
+
+---
+
 # How Context Fails
 
-![Four ways context fails: poisoning, where a wrong fact is reused as true; distraction, where too much history makes the agent repeat past behaviour; confusion, where irrelevant content pulls the answer off target; and clash, where two statements contradict and the model cannot tell which is current](assets/ce-failure-modes.png)
+Context fails in two ways: because of **what is in it**, and because of **how much of it there
+is**. Four named modes cover the first. None of them raises an error, which is why they are found
+by reading transcripts, not logs.
 
-All four get more likely as the window fills. None of them raises an exception, so all four are
-found by reading transcripts, not logs.
+## Context Poisoning
 
-| Failure | Root cause | How to fix it |
-|---------|-----------|---------------|
-| **Poisoning** | A wrong fact persists and compounds | Check accuracy before saving · let only trusted sources write to memory · hold unconfirmed facts separately |
-| **Distraction** | Too much history crowds out fresh reasoning | **Compress** — prune old tool results, summarise old turns, delete what is finished |
-| **Confusion** | Irrelevant content or too many overlapping tools | **Select** — retrieve only what fits the question · write clear, non-overlapping tool descriptions |
-| **Clash** | Two contradictory statements, both current-looking | **Write** — one value under one key, newer replaces older · set a priority order for sources |
+A wrong fact enters the window and is then treated as true by every later turn. Because the model
+reads its own history, one early error becomes the premise for everything after it.
 
-**Confusion is usually designed in, not accumulated.** Three tools that can all search documents
-leave the model guessing which to call. Give each tool one clear purpose, a descriptive name and
-no overlap, and the failure never happens:
+*In SkillMap:* one listing comes back with the wrong city, gets summarised into an answer, and the
+agent keeps recommending it.
 
-| Confusing | Clear |
-|---|---|
-| `search_documents` — searches everything | `search_document_by_keyword` — full-text search |
-| `find_files` — also searches documents | `get_document_by_id` — fetch one known document |
-| `query_database` — can also search documents | `list_recent_documents` — browse recent items |
+## Context Distraction
+
+So much history accumulates that the model leans on the pattern of what it already did instead of
+reasoning about the new question.
+
+*In SkillMap:* turn 4 re-runs a search whose results are already sitting in the window.
+
+## Context Confusion
+
+Irrelevant content pulls the answer off target. The information is not wrong — it is just not what
+this question is about.
+
+*In SkillMap:* the learner asks about Pune and the answer includes Hyderabad roles, because those
+results are still there.
+
+## Context Clash
+
+Two parts of the window disagree and nothing marks which is current.
+
+*In SkillMap:* the learner said "internships" on turn 2 and "full-time roles" on turn 6. Both are
+in the history. Both look equally true.
+
+| Failure | How to fix it |
+|---------|---------------|
+| **Poisoning** | Check accuracy before saving · let only trusted sources write to memory |
+| **Distraction** | **Compress** — prune old tool results, summarise old turns |
+| **Confusion** | **Select** — retrieve only what fits the question · give tools clear, non-overlapping descriptions |
+| **Clash** | **Write** — one value under one key, so the newer write replaces the older |
+
+<MultiLineWarning text="These failures return confident answers">
+
+None of the four produces an exception or a stack trace. The agent returns a well-formatted answer
+that is simply worse than it should be. That is what makes them easy to ship.
+
+</MultiLineWarning>
 
 ---
 
 # The Four Techniques
 
-![Four techniques around the context window: select is the only one that puts information in, retrieving just what the question needs, while write sends facts out to a store, compress prunes or summarises, and isolate hands a sub-task to another agent](assets/ce-four-techniques.png)
+Every fix is one of four moves. The useful way to hold them: **select** is the only one that puts
+information *in*. The other three take it *out* — to a store, to a summary, or to another agent.
 
-| Technique | What it does | Where we meet it |
-|-----------|--------------|------------------|
+| Technique | What it does | Where we have met it |
+|-----------|--------------|----------------------|
 | **Write** | Save information outside the window, to read back later | The memory session — `save_learner_profile` writing to `InMemoryStore` |
 | **Select** | Pull in only what this question needs | The RAG session — retrieve matching chunks, then answer |
-| **Compress** | Shrink what is already in the window | This session — pruning and compaction |
-| **Isolate** | Split work so no single window holds it all | Sub-agents, at the end of this doc |
+| **Compress** | Shrink what is already in the window | This session's hands-on |
+| **Isolate** | Split work so no single window holds all of it | Sub-agents, each with its own context |
 
 **Compress has two forms**, and the difference decides which to reach for:
 
@@ -225,500 +366,144 @@ no overlap, and the failure never happens:
 | Costs a model call? | No | Yes |
 | Best for | Stale tool output | Long conversations that still matter |
 
+**Isolate** is the one we have not used yet. A sub-agent gets one focused task and its own window,
+does the heavy reading, and returns only its conclusion. For SkillMap the natural split is
+research: a sub-agent reads twenty listings and hands back a shortlist, so the raw listings never
+enter the main conversation. The cost is that each sub-agent is its own set of model calls, and
+sub-agents cannot see each other's work.
+
 <MultiLineNote>
 
 **Write** is also what settles a context clash. If "internships only" and "full-time roles" are
 both in the history, the model has two equally current statements and no rule for choosing. Write
-each preference to the store instead and there is one value under one key — the newer write
-replaces the older. The window stops being where the argument happens.
+each preference to the store instead and there is one value under one key. The window stops being
+where the argument happens.
 
 </MultiLineNote>
 
 ---
 
-# Hands-On: Pruning and Compaction on the SkillMap Agent
+# Four Principles for Managing Context
 
-We now fix the problem we measured at the start. LangChain ships both techniques as
-**middleware** — they attach to `create_agent` and need no changes to our tools.
+The four techniques are a **cure** — they act on a window that has already filled. These four
+principles are the **prevention**.
 
-Every number here is reproducible. The cells below rebuild the exact three-turn conversation we
-just counted, so the counts should match ours.
+## Principle 1: Minimal High-Quality Information
 
-<MultiLineNote>
+**Goal:** the minimum amount of high-quality information needed to finish the task.
 
-Middleware sits between the agent and the model, and edits the messages on their way to the
-model. Our tool functions, prompts and agent logic stay exactly as they are.
+Think of packing a suitcase. Do not pack the whole wardrobe. Pack what will actually be used, and
+prefer versatile items.
 
-</MultiLineNote>
-
-## Step 0: Set Up
-
-```python
-!pip install "langchain==1.3.17" "langchain-core==1.6.0" "langgraph==1.2.11" \
-             "langchain-google-genai==4.3.5" "langchain-tavily==0.2.18"
-```
-
-Pinned on purpose. The middleware API arrived with LangChain 1.x and is still settling. An
-unpinned `-U` install can hand us different arguments from the ones in this doc.
-
-```python
-from langchain.agents import create_agent
-from langchain.agents.middleware import (
-    ContextEditingMiddleware,
-    ClearToolUsesEdit,
-    SummarizationMiddleware,
-)
-from langchain_core.messages import (
-    SystemMessage, HumanMessage, AIMessage, ToolMessage,
-)
-from langchain_core.messages.utils import count_tokens_approximately
-from langgraph.checkpoint.memory import InMemorySaver
-```
-
-To measure pruning we need a conversation to measure. Instead of running three live searches
-every time, rebuild the same three turns from the payload *shapes* a real run produces — Tavily
-prose from `skill_demand`, a JSON list of five jobs from `search_jobs`. No API key, no waiting,
-and identical token counts every run:
-
-```python
-import json
-
-SYSTEM = ("You are a Skill Mapping assistant that helps students understand skill demand "
-          "and find matching job opportunities.\nYou have access to these tools:\n"
-          "- skill_demand: Research industry demand, salary insights and career trends\n"
-          "- search_jobs: Find actual job listings requiring specific skills\n"
-          "Present results in a clean, readable format with clear sections.")
-
-TURNS = [("Generative AI", "Hyderabad"),
-         ("AI Engineer", "Bangalore"),
-         ("Machine Learning", "Pune")]
-
-def demand(skill):                      # what skill_demand returns
-    return (f"88 {skill} Job Creation Statistics and Trends for 2026\n"
-            f"Entry-level {skill} roles average $50,000 to $80,000, while senior "
-            "specialized positions in big tech can exceed $500,000 annually. "
-            f"Professionals with {skill} expertise can expect an average salary of "
-            "around $174,727 per year.\n\n") * 3
-
-def jobs(skill, city):                  # what search_jobs returns
-    return json.dumps([{"title": f"{skill} Engineer (LLM + RAG)",
-                        "company": "Top Gen AI Jobs",
-                        "location": city,
-                        "apply_link": "https://in.linkedin.com/jobs/view/"
-                                      "generative-ai-agentic-ai-engineer-4459016350"}] * 5,
-                      indent=2)
-
-def history(turns=3):
-    """One question per turn, each firing skill_demand + search_jobs."""
-    ms = [SystemMessage(SYSTEM)]
-    for i, (skill, city) in enumerate(TURNS[:turns]):
-        ms.append(HumanMessage(f"Find me {skill} jobs in {city}"))
-        ms.append(AIMessage(content="", tool_calls=[
-            {"name": "skill_demand", "args": {"skill": skill}, "id": f"d{i}"},
-            {"name": "search_jobs", "args": {"skill": skill, "location": city}, "id": f"j{i}"}]))
-        ms.append(ToolMessage(content=demand(skill), tool_call_id=f"d{i}"))
-        ms.append(ToolMessage(content=jobs(skill, city), tool_call_id=f"j{i}"))
-        ms.append(AIMessage(content=f"Here are 5 {skill} openings in {city}."))
-    return ms
-```
-
-## Step 1: Where We Left Off
-
-We are not building a new agent. We are adding two pieces of middleware to the SkillMap Agent
-from the memory session. Everything below is carried over from that notebook unchanged, and the
-code in this section assumes it is already defined:
-
-| Name | What it was in the memory session |
-|------|-----------------------------------|
-| `model` | `init_chat_model("google_genai:gemini-2.5-flash", api_key=GOOGLE_API_KEY)` |
-| `SYSTEM_PROMPT` | The Skill Mapping assistant prompt, including its memory rules |
-| `skill_demand_tool`, `search_jobs` | Research and job-search tools |
-| `save_learner_profile`, `get_learner_profile`, `save_interaction` | The memory tools |
-| `store` | `InMemoryStore()` — long-term memory across sessions |
-| `checkpointer` | `InMemorySaver()` — short-term memory within a thread |
-| `Context` | The dataclass carrying `user_id` |
-
-## Step 2: Measure the Context
-
-Before changing anything, measure. `count_tokens_approximately` gives the size of any message
-list, which is how the numbers at the top of this doc were produced:
-
-```python
-messages = history(turns=3)          # the same three questions, tool calls and answers
-
-total = count_tokens_approximately(messages)
-tool_output = count_tokens_approximately(
-    [m for m in messages if isinstance(m, ToolMessage)]
-)
-print(f"total: {total}, tool output: {tool_output} ({100 * tool_output // total}%)")
-
-for i, m in enumerate(messages):     # and where exactly the weight sits
-    print(f"  {i:2d} {type(m).__name__:14s} {count_tokens_approximately([m]):5d}")
-```
-
-```
-total: 1897, tool output: 1535 (80%)
-   0 SystemMessage     93
-   1 HumanMessage      14
-   2 AIMessage         59
-   3 ToolMessage      230
-   4 ToolMessage      283
-   5 AIMessage         17
-   6 HumanMessage      14
-   ...
-```
-
-The per-message column is the whole argument in one place. Every `ToolMessage` costs 225–283
-tokens; every question, answer and tool call costs under 60. Six tool results outweigh everything
-else in the conversation put together.
-
-> Measure before optimising. If tool output were 10% of the window, pruning it would be wasted
-> effort — the problem would be somewhere else in the stack.
-
-## Step 3: Add Tool-Output Pruning
-
-`ClearToolUsesEdit` replaces old tool results with a placeholder once the context crosses a
-threshold, keeping the most recent ones intact.
-
-```python
-pruning = ContextEditingMiddleware(
-    edits=[
-        ClearToolUsesEdit(
-            trigger=500,          # start clearing once the context passes 500 tokens
-            keep=1,               # always keep the most recent tool result
-            placeholder="[cleared]",
-        )
-    ]
-)
-```
-
-That object is what we hand to the agent later. But to *see* what the edit does, apply it
-straight to a message list — no agent, no model call, no API key:
-
-```python
-messages = history(turns=3)
-before = count_tokens_approximately(messages)
-
-edit = ClearToolUsesEdit(trigger=500, keep=1, placeholder="[cleared]")
-edit.apply(messages, count_tokens=count_tokens_approximately)     # edits in place
-
-after = count_tokens_approximately(messages)
-print(f"{before} -> {after} tokens  ({100 * (before - after) // before}% smaller)")
-print([m.content[:30] for m in messages if isinstance(m, ToolMessage)])
-```
-
-```
-1897 -> 677 tokens  (64% smaller)
-['[cleared]', '[cleared]', '[cleared]', '[cleared]', '[cleared]', '[\n  {\n    "title": "Machine Le']
-```
-
-![Before pruning all six tool results sit in the window at 1897 tokens; after ClearToolUsesEdit with keep=1 the five older ones become the placeholder cleared and only the newest survives, leaving 677 tokens, while questions and answers are untouched](assets/ce-pruning-before-after.png)
-
-The five older tool results become `[cleared]`; the newest survives untouched. The agent keeps
-the answer it is working on and forgets the searches the learner has moved past.
-
-Three arguments decide the behaviour:
-
-| Argument | What it controls | Default |
-|----------|------------------|---------|
-| `trigger` | Context size at which clearing starts | `100000` |
-| `keep` | How many recent tool results to preserve | `3` |
-| `exclude_tools` | Tools whose output must never be cleared | `()` |
-
-`trigger=500` is deliberately small here so the effect is visible on a short conversation. In a
-real agent it should sit near the point where the window starts to hurt, not near the start. (Two
-further arguments, `clear_at_least` and `clear_tool_inputs`, stay at their defaults.)
-
-<MultiLineWarning text="Pruning edits what the model sees, not what is stored">
-
-`ContextEditingMiddleware` edits messages on their way to the model. The agent's saved history
-still contains the full tool results — confirmed by printing agent state after a run.
-
-So measure the way we just did, on the message list handed to the edit — **not** by inspecting
-stored history. A student who prints the checkpointed state and sees full tool output has not
-found a bug.
-
-</MultiLineWarning>
-
-## Step 4: Check What Pruning Broke
-
-Cutting 64% of the window is only half a result. The other half is whether the agent can still
-answer. Token counts cannot tell us that. The number looks the same whether we deleted junk or
-deleted the one thing the learner is about to ask about.
-
-So measure something else too: **which facts are still in the window.** List the facts the agent
-must reach, then check each one after pruning.
-
-```python
-FACTS = {
-    "Hyderabad job listings": '"location": "Hyderabad"',
-    "Bangalore job listings": '"location": "Bangalore"',
-    "Pune job listings":      '"location": "Pune"',
-    "the salary figure":      "$174,727",
-    "what the learner asked": "Find me Machine Learning jobs in Pune",
-}
-
-def survives(messages, fact):
-    return any(fact in m.text for m in messages)
-
-for keep in (1, 2, 3, 6):
-    messages = history(turns=3)
-    ClearToolUsesEdit(trigger=500, keep=keep, placeholder="[cleared]").apply(
-        messages, count_tokens=count_tokens_approximately)
-    kept = [name for name, f in FACTS.items() if survives(messages, f)]
-    print(f"keep={keep}: {count_tokens_approximately(messages):5d} tokens, "
-          f"{len(kept)}/{len(FACTS)} facts")
-```
-
-```
-keep=1:   677 tokens, 2/5 facts
-keep=2:   907 tokens, 3/5 facts
-keep=3:  1180 tokens, 4/5 facts
-keep=6:  1897 tokens, 5/5 facts
-```
-
-Now `keep` is a design decision instead of a knob. `keep=1` gives the cheapest window and the most
-forgetful agent. Ask it "what was that salary figure you mentioned?" and it cannot answer — that
-fact is `[cleared]`. `keep=3` costs 503 more tokens and holds four facts out of five.
-
-Two things in that table are worth stopping on:
-
-* **"What the learner asked" survives every setting.** Pruning only ever touches tool output.
-  Questions, answers and the system prompt are never at risk. That is why pruning is safer than
-  deleting the oldest messages.
-* **There is no correct row.** The right `keep` depends on which facts your agent gets asked about
-  later. That is a product question, and measuring is how you answer it.
-
-<MultiLineNote>
-
-This is the smallest honest test of a context change. List the facts the agent must retain, then
-report **two** numbers: tokens saved *and* facts retained. A change that improves one number
-while quietly ruining the other is not an improvement.
-
-</MultiLineNote>
-
-## Step 5: Add Compaction
-
-Pruning throws old results away. Sometimes the conversation itself is what is long, and its
-content still matters — the learner's stated preferences, what has already been ruled out.
-`SummarizationMiddleware` replaces old messages with a model-written summary.
-
-```python
-compaction = SummarizationMiddleware(
-    model=model,
-    trigger=("tokens", 4000),        # summarise once the context passes 4000 tokens
-    keep=("messages", 20),           # leave the 20 most recent messages alone
-)
-```
-
-Both arguments take a `(unit, amount)` pair, which is why the same threshold can be written three
-different ways:
-
-| Pair | Means |
-|------|-------|
-| `("tokens", 4000)` | 4,000 tokens. Predictable, but tied to one model's window |
-| `("messages", 20)` | 20 messages. Easy to reason about, blind to how large each one is |
-| `("fraction", 0.8)` | 80% of *this* model's window. Adapts automatically if the model changes |
-
-<MultiLineWarning text="A summary is a new, unsourced fact">
-
-Compaction hands the history to a model and keeps whatever comes back. That cuts two ways. A
-wrong summary becomes a context poisoning event that then persists. And personal detail the
-pruner would have dropped can be copied into the summary, where it is no longer attached to the
-tool result it came from.
-
-</MultiLineWarning>
-
-## Step 6: Wire Both Into the Agent
-
-```python
-agent = create_agent(
-    model=model,
-    system_prompt=SYSTEM_PROMPT,
-    tools=[skill_demand_tool, search_jobs,
-           save_learner_profile, get_learner_profile, save_interaction],
-    middleware=[pruning, compaction],
-    checkpointer=checkpointer,
-    store=store,
-    context_schema=Context,
-)
-```
-
-**The order of that list does not decide which one runs first.** The two attach to the agent at
-different points, and that is what sets the sequence:
-
-| | Attaches | Reads | Writes |
-|---|---|---|---|
-| `SummarizationMiddleware` | *before* the model call | the saved history | the saved history — old messages are **replaced** by the summary |
-| `ContextEditingMiddleware` | *around* the model call | the outgoing request | the request only — saved history is untouched |
-
-So compaction runs first, and pruning then edits whatever compaction left on its way out to the
-model. Swapping the list makes no difference. Order-by-position only matters between middleware
-that attach at the *same* point.
-
-The distinction that does matter is what each one changes:
-
-* **Pruning is temporary and costs no model call.** It changes only what this one request shows
-  the model. The full tool results are still in the saved history, so being wrong about `keep`
-  costs us nothing permanent.
-* **Compaction is permanent and costs a model call.** It rewrites what the agent remembers. If
-  the summary is wrong, that error *is* the history now.
-
-That is the real reason to reach for pruning first when tool output fills the window. It costs no
-model call, and it can be undone.
-
-## Step 7: The Proof — Ask Turn 4 Again
-
-This is the question that went wrong at the start of the session. Everything the agent needs is
-in its window either way; the only difference is how much noise sits around it.
-
-Run the same four turns twice — once with no middleware, once with pruning — and compare what the
-model is handed on each turn:
-
-```python
-TURNS = [
-    "Find me Generative AI jobs in Hyderabad",
-    "Now AI Engineer roles in Bangalore",
-    "And Machine Learning in Pune",
-    "Of the Pune roles you just listed, which need less than 2 years experience?",
-]
-
-def run(label, middleware):
-    agent = create_agent(
-        model=model, system_prompt=SYSTEM_PROMPT,
-        tools=[skill_demand_tool, search_jobs],
-        middleware=middleware,
-        checkpointer=InMemorySaver(),
-    )
-    config = {"configurable": {"thread_id": label}}
-    print(f"\n=== {label} ===")
-    for i, question in enumerate(TURNS, 1):
-        response = agent.invoke({"messages": [{"role": "user", "content": question}]},
-                                config=config)
-        sent = [m for m in response["messages"] if getattr(m, "usage_metadata", None)]
-        print(f"  turn {i}: input_tokens = {sent[-1].usage_metadata['input_tokens']}")
-    return response["messages"][-1].text
-
-plain  = run("no-middleware", [])
-pruned = run("with-pruning", [pruning])
-
-print("\n--- turn 4, no middleware ---\n", plain)
-print("\n--- turn 4, with pruning ---\n", pruned)
-```
-
-<!-- OUTPUT TO CAPTURE: run ce_code/proof_run.py and paste the two blocks here.
-     Not filled in yet — the Gemini free tier allows 20 requests/day and the day's
-     quota was spent. Do not write illustrative numbers here; capture the real run. -->
-
-Two things to look for in the comparison, and they pull in opposite directions:
-
-* **`input_tokens` on turn 4 should be far lower with pruning**, because the tool results from
-  turns 1 and 2 are `[cleared]` before the request goes out.
-* **The answer itself should not get worse** — turn 4 asks about the Pune roles, which are the
-  most recent tool result, and `keep=1` is precisely the setting that protects them.
-
-That second point is the one worth checking rather than assuming. It is the fact-retention test
-from Step 4, run against a live agent instead of a message list.
-
-## Try It Yourself
-
-1. Change `keep=1` to `keep=2` and re-measure. What is the new total, and which extra fact came
-   back with it? Use the per-message token counts to explain the size of the jump.
-2. Set `trigger=100000` and re-run. Why does nothing change?
-3. Add `exclude_tools=("search_jobs",)`. Which results survive now, and when would that be the
-   right choice?
-4. **Poison the context.** Build the same conversation with one thing wrong — turn 1's job search
-   comes back with Kolkata listings for a Hyderabad question:
-
-   ```python
-   def poisoned_history():
-       ms = history(3)
-       for m in ms:
-           if isinstance(m, ToolMessage) and m.tool_call_id == "j0":
-               m.content = jobs("Generative AI", "Kolkata")     # <-- the poison
-       return ms
-   ```
-
-   Nothing raises an error. Check whether `"location": "Kolkata"` is still in the window
-   (a) unpruned, (b) with `keep=1`, (c) with `keep=6`. Explain all three results — then say what
-   compaction would have done with that same bad fact instead of clearing it.
-
----
-
-# Overflow Strategies in Depth
-
-We have used two ways to handle a filling window. There is a third we have not touched, and the
-three fail differently — which is what decides between them.
-
-| Strategy | What it does | Keeps meaning? | Costs a model call? |
-|----------|--------------|----------------|---------------------|
-| **Trimming / sliding window** | Delete by *position* — oldest first, or keep only the last N | No | No |
-| **Pruning** | Delete by *kind* — tool results, wherever they sit | No | No |
-| **Summarisation (compaction)** | Replace old messages with a written summary | Yes | Yes |
-
-What each one gets wrong:
-
-* **Trimming / sliding window** — position is a bad proxy for value. Discards the learner's
-  preference from turn 2 while keeping a routine acknowledgement from turn 9. Fine only when
-  recency genuinely tracks relevance.
-* **Pruning** — deletes by *kind*, so small valuable messages survive by construction. Our
-  retention table showed it: "what the learner asked" survived every setting of `keep`.
-* **Summarisation** — keeps the gist, loses the detail, costs a call. A wrong summary is a
-  context poisoning event that then persists.
-
-## Choosing a Trigger
-
-| Unit | Example | Trade-off |
-|------|---------|-----------|
-| Tokens | `("tokens", 4000)` | Predictable, but tied to one model's window |
-| Messages | `("messages", 40)` | Easy to reason about, blind to message size |
-| Fraction | `("fraction", 0.8)` | Adapts automatically when the model changes |
-
-Too low and the agent summarises constantly, paying calls and losing detail for nothing. Too high
-and it overflows before help arrives. **Start near 70–80% of the usable window**, leaving room for
-the response.
-
-<MultiLineWarning text="Free of model calls is not free of cost">
-
-Providers cache the front of a prompt they have already seen and charge less for the cached part.
-Every context edit rewrites that front, so the next call has nothing to reuse and is billed in
-full. A trigger that fires on every single turn can therefore cost *more* than leaving the window
-alone. Prefer occasional large edits over continuous small ones. Check the caching rules for the model
-you are using before tuning on token counts alone.
-
-</MultiLineWarning>
-
----
-
-# Isolating Work with Sub-Agents
-
-The last technique does not shrink the context. It splits it.
-
-A **sub-agent** is given one focused task and its own context window. It does the heavy reading,
-and returns only its conclusion. The main agent never sees the intermediate work.
-
-```
-                          ┌───────────────────────────────────────────┐
-                          │  Research sub-agent                       │
-                          │  reads 20 job pages   ──►  3 lines back   │
-Main agent ── delegates ──┤                                           │
-(own window)              │  Analysis sub-agent                       │
-                          │  scans salary data    ──►  2 bullets back │
-                          └───────────────────────────────────────────┘
-                             each with its own context window
-
-Main agent receives 5 lines. It never sees the 20 pages.
-```
-
-For SkillMap the natural split is research. A sub-agent reads many job listings in its own window
-and returns a shortlist, so the raw listings never enter the main conversation.
-
-| | |
+| Instead of | Do this |
 |---|---|
-| **What it buys** | Bulk intermediate work never enters the main window |
-| **What it costs** | Separate model calls — the saving is paid for elsewhere |
-| **What it complicates** | Sub-agents cannot see each other's work; anything one finds must be passed on explicitly, or it is lost |
-| **When it is worth it** | The sub-task is self-contained *and* its intermediate output is large next to its conclusion — the shape of a research task |
+| Including an entire document | Highlight the key points |
+| Keeping every old message | Summarise the ones that still matter |
+| Providing 20 examples | Offer 3–5 diverse, clear ones |
+
+## Principle 2: Smart System Prompts
+
+Everything from the **Effective Prompting Techniques** session still applies. What changes in an
+agent is that the system prompt is re-sent on **every turn**, and that has two consequences:
+
+* **Its tokens are permanent.** A 500-token prompt occupies 500 tokens of every single turn,
+  before anything useful is added. Tighten it once and the space comes back on every turn.
+* **Its instructions compete.** Every rule added makes the others slightly less salient. A prompt
+  with thirty rules is followed less reliably than one with six.
+
+The goal is not the most complete system prompt. It is the smallest one that still produces the
+behaviour we need.
+
+| Tip | Why |
+|-----|-----|
+| Put must-never-break rules at the top | Instructions in the middle of a long context get the least attention |
+| Say what to do, not only what to avoid | "Answer in one paragraph" beats "don't be verbose" |
+| Cut anything the tools already say | A tool description that explains when to use it is paying twice |
+| Re-read it periodically | Prompts accumulate rules added for one-off failures, and those rules never get removed |
+
+### Pitch It at the Right Level
+
+There are two ways to get a system prompt wrong, and they are opposites.
+
+| Too rigid | Too vague |
+|---|---|
+| Hardcoded if-else logic for every case the agent might meet | "Be helpful and use good judgement" |
+| Breaks on the first situation nobody anticipated | Gives the model nothing concrete to act on |
+
+The target sits between them: **specific enough to guide behaviour, general enough to survive a
+situation we did not predict.** Write heuristics, not branches.
+
+### Give the Context a Shape
+
+This is the *format* half of the definition. A wall of undifferentiated text is harder for a model
+to use than the same text with its parts marked out.
+
+* **Delineate the sections** — markdown headings or XML tags around background, instructions, tool
+  guidance and output rules. The model can then tell an instruction from an example.
+* **Prefer a few canonical examples to many edge cases.** Three to five diverse, clear examples
+  teach the shape of a good answer better than twenty near-duplicates — and cost far fewer tokens.
+  This is Principle 1 applied to examples.
+
+The same applies to what tools return. A tool that hands back tidy, labelled fields is easier to
+use than one that returns a raw dump, even when both contain the same facts.
+
+## Principle 3: Efficient Tool Design
+
+A tool's description and schema sit in the window every turn, used or not. Overlapping tools are
+both a standing token cost and the direct cause of context confusion.
+
+| Confusing | Clear |
+|---|---|
+| `search_documents` — searches everything | `search_document_by_keyword` — full-text search |
+| `find_files` — also searches documents | `get_document_by_id` — fetch one known document |
+| `query_database` — can also search documents | `list_recent_documents` — browse recent items |
+
+A good tool has one clear purpose, a descriptive name, no overlap with its neighbours, and returns
+focused results rather than a data dump. That last point is the one that bit us: `skill_demand`
+and `search_jobs` return everything the API gives them.
+
+## Principle 4: Smart Information Retrieval
+
+This is **select**, stated as a design rule. The choice is *when* data enters the window.
+
+| | Pre-load everything | Just-in-time retrieval |
+|---|---|---|
+| **Step 1** | User asks a question | User asks a question |
+| **Step 2** | Search every source at once | The model works out what it actually needs |
+| **Step 3** | Load it all into context | A tool fetches only that |
+| **Step 4** | The model sifts through it | The model works on focused data |
+| **Step 5** | — | If more is needed, repeat from step 2 |
+
+A concrete case — *"What were our sales in Q3 2024 for Product X?"*
+
+* **Pre-loading:** fetch all of 2024's sales, 10,000 rows, and let the model find the answer.
+* **Just-in-time:** the model recognises what it needs, and a tool runs
+  `SELECT * FROM sales WHERE quarter='Q3' AND year=2024 AND product='X'` — 50 rows come back.
+
+Same answer. A fraction of the window, and nothing stale left behind for the next turn.
+
+---
+
+# How to Tell If It Worked
+
+Every technique in this session removes something from the window. That makes them easy to
+over-apply, because the token count improves either way — whether we cut noise or cut the answer.
+
+So measure two numbers, never one:
+
+| Measure | The question it answers |
+|---|---|
+| **Tokens in the window** | Did the change make room? |
+| **Task success** | Can the agent still do the job? |
+
+Task success needs to be concrete before the change, not judged after it. Fix a short list of
+facts the agent must still be able to reach: the city the learner asked about, the most recent
+search results, the preference stated on turn 2. Then check each one afterwards.
+
+That list is what turns a setting into a decision. Keeping one recent tool result is cheaper than
+keeping three, and which is right depends entirely on what the next question needs.
+
+> A context change that reports only tokens saved is reporting half a result.
 
 ---
 
@@ -726,48 +511,28 @@ and returns a shortlist, so the raw listings never enter the main conversation.
 
 | Situation | Reach for | Why |
 |-----------|-----------|-----|
-| Tool results dominate the window | **Pruning** | No model call, targeted, reversible — and they are usually stale |
-| The conversation itself is long and still matters | **Compaction** | Keeps meaning that trimming would lose |
+| Tool results dominate the window | **Pruning** | Needs no model call, and they are usually stale |
+| The conversation is long and still matters | **Compaction** | Keeps meaning that deleting would lose |
 | A fact must survive across sessions | **Write** to a store | The window is not storage |
-| The agent loads data it does not always need | **Select** — retrieve on demand | Cheaper than pre-loading |
-| One sub-task produces a lot and concludes briefly | **Isolate** in a sub-agent | Keeps bulk out of the main window |
+| The agent loads data it does not always need | **Select** — retrieve on demand | Nothing unused takes up space |
+| One sub-task produces a lot and concludes briefly | **Isolate** in a sub-agent | Keeps the bulk out of the main window |
 
 A short decision path:
 
-1. **Measure first — twice.** Find which layer of the stack is actually large, and fix the list of
-   facts the agent must retain. Optimising the wrong layer changes nothing; optimising without the
-   second list breaks things quietly.
-2. **Try the reversible fixes.** Pruning and better tool design cost no model calls, and neither
-   one rewrites what the agent has saved.
-3. **Then pay for compaction**, once there is meaning worth preserving.
+1. **Measure first.** Find which layer of the stack is actually large. Optimising the wrong layer
+   changes nothing.
+2. **Try the fixes that need no model call.** Pruning and better tool design are the easiest to
+   try and the easiest to undo.
+3. **Then reach for compaction**, once there is meaning worth preserving.
 4. **Reach for isolation last** — it is the largest change to the shape of the system.
 
 <MultiLineNote>
 
-The cheapest context fix is often not a technique at all. A tool that returns 5 fields instead of 50 keeps
-tokens out of the window in the first place. So does a system prompt that says what to leave out.
-Nothing beats not adding them.
+The cheapest context fix is often not a technique at all. A tool that returns 5 fields instead of
+50 keeps tokens out of the window in the first place. So does a system prompt that says what to
+leave out. Nothing beats not adding them.
 
 </MultiLineNote>
-
----
-
-# Check Your Understanding
-
-1. Our agent's tool output was 80% of the window at turn 3. Which technique would we apply first,
-   and why that one rather than summarisation?
-2. What is the difference between pruning and compaction, in both what they keep and what they cost?
-3. `create_agent` receives `middleware=[pruning, compaction]`. Which of the two actually runs
-   first, and why is it not the one listed first?
-4. A learner says "internships only" on turn 2 and "full-time roles" on turn 6. Which failure mode
-   is this, and which technique addresses it?
-5. After enabling pruning, a student prints the saved agent state and still sees full tool
-   results. Is the middleware broken?
-6. When does isolation with sub-agents cost more than it saves?
-7. Pruning cut our window by 64%. Which measurement told us whether that was safe, and which
-   measurement could never have told us?
-8. Compaction rewrites the saved history; pruning does not. Which of the two could you switch off
-   after a run and still recover the original conversation?
 
 ---
 
@@ -775,21 +540,21 @@ Nothing beats not adding them.
 
 | Idea | What to remember |
 |------|------------------|
-| Context engineering | Choosing what fills the window, on every call — not just wording a prompt |
-| The goal | The smallest set of high-signal tokens that gets the outcome |
-| Context stack | System prompt, tools, retrieved knowledge, memory, history, current input |
-| What grows | Conversation history, and inside it tool output — 80% of our agent's window by turn 3 |
-| Failure modes | Poisoning, distraction, confusion, clash — none of which raise an error |
-| Four techniques | Write, select, compress, isolate |
-| Pruning | `ClearToolUsesEdit` — no model call, targeted, 1897 → 677 tokens on our agent |
-| Compaction | `SummarizationMiddleware` — keeps meaning, costs a model call, rewrites saved history |
-| Which runs first | Compaction, always — it is a before-model hook. The list order does not change it |
-| Measuring a fix | Two numbers, never one: tokens saved *and* facts retained |
+| Context engineering | Deciding what the model reads, on every call — not wording one prompt |
+| The goal | The smallest set of high-signal tokens that gets the job done |
+| The context stack | System prompt, tools, retrieved knowledge, memory, history, current input |
+| What grows | Conversation history, and inside it tool output |
+| Why it is needed | An LLM remembers nothing between calls. The window is its entire world for one call |
+| Memory vs context | Memory is what the agent stores; context is what the model reads. A stored fact does nothing until something puts it in the window |
+| The window's two limits | A hard maximum that truncates or rejects, and a soft decline (context rot) that starts long before it |
+| Four failure modes | Poisoning, distraction, confusion, clash — none of which raise an error |
+| Four techniques | Write, select, compress, isolate — only select adds |
+| Four principles | Minimal information, smart system prompts, efficient tools, just-in-time retrieval |
 
 The line worth carrying forward:
 
-> A bigger context window is not a fix. It just raises the ceiling on how much noise the agent
-> can carry.
+> A bigger context window is not a fix. It just raises the ceiling on how much noise the agent can
+> carry.
 
 ---
 
@@ -797,12 +562,11 @@ The line worth carrying forward:
 
 * <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank">Effective context engineering for AI agents</a>
 * <a href="https://research.trychroma.com/context-rot" target="_blank">Context Rot: how increasing input tokens impacts LLM performance</a>
+* <a href="https://arxiv.org/abs/2505.06120" target="_blank">LLMs Get Lost in Multi-Turn Conversation</a>
 * <a href="https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html" target="_blank">How long contexts fail, and how to fix them</a>
 * <a href="https://www.langchain.com/blog/context-engineering-for-agents" target="_blank">Context Engineering for Agents</a>
+* <a href="https://www.elastic.co/search-labs/blog/context-engineering-overview" target="_blank">What is Context Engineering?</a>
+* <a href="https://www.datacamp.com/blog/context-engineering" target="_blank">Context Engineering: A Guide With Examples</a>
+* <a href="https://sourcegraph.com/blog/context-engineering" target="_blank">Context Engineering</a>
 * <a href="https://www.promptingguide.ai/guides/context-engineering-guide" target="_blank">Context Engineering Guide</a>
 * <a href="https://aiengineeringfromscratch.com/lesson?path=phases%2F11-llm-engineering%2F05-context-engineering&amp;learningPath=agentic-ai-engineer" target="_blank">Context Engineering — AI Engineering From Scratch</a>
-* <a href="https://docs.langchain.com/oss/python/langchain/middleware" target="_blank">LangChain middleware API reference</a>
-
-**Verified against:** `langchain 1.3.17`, `langchain-core 1.6.0`, `langgraph 1.2.11`,
-`langchain-google-genai 4.3.5`, `langchain-tavily 0.2.18`, Python 3.12.3. Every token count in
-this session is reproduced by `ce_code/skillmap_context_lab.py`.

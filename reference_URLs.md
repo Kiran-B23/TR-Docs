@@ -230,12 +230,16 @@ section is where the mapping of source to content lives.
 
 | Source | What came from it |
 |---|---|
+| **`gen-ai-tr-doc-creator/building-llm-applications--41-introduction-to-context-engineering.md`** (the course's own RM for Unit 41) | The canonical definition ("just the right information, in the right format, at the right time"); the CPU/RAM/OS analogy; the when-to-use-which lists; the per-failure fixes; the good-vs-bad tool-design contrast; "more context ≠ better performance". **This is course-internal, not an external source** — the doc should stay consistent with it |
 | https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents | "Smallest set of high-signal tokens" goal; compaction, note-taking, sub-agents, just-in-time retrieval |
-| https://research.trychroma.com/context-rot | The term **context rot** and the benchmarking behind it. Originates here; the Anthropic guide cites it rather than coining it |
+| https://research.trychroma.com/context-rot | The term **context rot** and the benchmarking behind it. Originates here; the Anthropic guide cites it rather than coining it. RM 41 links this same URL |
 | https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html | The four failure modes: poisoning, distraction, confusion, clash. Originates here |
 | https://www.langchain.com/blog/context-engineering-for-agents | The **write / select / compress / isolate** framework; relays Breunig's four failure modes |
 | https://www.promptingguide.ai/guides/context-engineering-guide | Component breakdown feeding the Context Stack table |
 | https://aiengineeringfromscratch.com/lesson?path=phases%2F11-llm-engineering%2F05-context-engineering&learningPath=agentic-ai-engineer | Token budgeting across components; overflow strategies |
+| https://www.elastic.co/search-labs/blog/context-engineering-overview | Narrative pacing reference — opens by acknowledging unfamiliarity, uses a "rubbish in, rubbish out" analogy and a concrete Travel Planner example |
+| https://www.datacamp.com/blog/context-engineering | Narrative pacing reference — opens on relatable frustrations, then definition → contrast with prompt engineering → applications → failure modes. 2–3 paragraphs per section |
+| https://sourcegraph.com/blog/context-engineering | Supplied as a source but **not read — the site returns HTTP 403 to automated fetch**. Listed in Further Reading; its content is not reflected in the doc |
 | https://docs.langchain.com/oss/python/langchain/middleware | `ContextEditingMiddleware`, `ClearToolUsesEdit`, `SummarizationMiddleware` signatures |
 
 **Terminology note:** no source uses the phrase **"context stack"**. Each enumerates the parts of
@@ -244,24 +248,70 @@ system prompt, instructions, user input, structured I/O, tools, RAG & memory, st
 Anthropic: system prompts, tools, examples, message history, external data. The doc's table is a
 synthesis, presented as the lesson rather than as a citation.
 
-**Empirical source of truth:** every token count in the doc is produced and asserted by
-`created_tr_docs/ce_code/skillmap_context_lab.py`.
+**Status (2 Sep 2026):** the doc was rewritten as **theory only**. The hands-on — 8 numbered
+steps, the token measurements and the middleware wiring — was removed and will be rebuilt in a
+later pass. The verification records below therefore describe the *previous* version and the lab
+that still backs it; they apply again once the hands-on returns.
+
+`created_tr_docs/ce_code/skillmap_context_lab.py` and `proof_run.py` remain on disk. The v1 doc
+with its hands-on is recoverable from git history (commit `0001eac`).
+
+**Empirical source of truth (for the hands-on, when it returns):** every token count was produced
+and asserted by `created_tr_docs/ce_code/skillmap_context_lab.py`.
 Verified on `langchain 1.3.17`, `langchain-core 1.6.0`, `langgraph 1.2.11`,
 `langchain-google-genai 4.3.5`, `langchain-tavily 0.2.18`, Python 3.12.3.
-
-| Claim in doc | Verified |
-|---|---|
-| Context grows 696 → 1290 → 1897 tokens over three SkillMap turns | Yes |
-| Tool output is 1535 tokens = 80% of the window at turn 3 | Yes |
-| `ClearToolUsesEdit(trigger=500, keep=1)` gives 1897 → 677 | Yes |
-| `ClearToolUsesEdit` defaults `trigger=100000`, `keep=3`, `exclude_tools=()` | Yes, from `inspect.signature` |
-| `SummarizationMiddleware` default `keep=("messages", 20)` | Yes |
-| `trigger` accepts both `("tokens", N)` and `("fraction", 0.8)` | Yes, both instantiate |
-| `create_agent` accepts `middleware=` | Yes |
-| Pruning edits messages to the model; stored history keeps full tool results | Yes — see `ce_code/README.md` |
 
 **Middleware ordering**, checked by running an agent with both list orders and logging which hook
 fired first: `SummarizationMiddleware` implements `before_model`, `ContextEditingMiddleware`
 implements `wrap_model_call`, and the before-model hook runs first either way. Re-check if the
 middleware base class changes. (Moved here from the doc — it is author provenance, not student
 content.)
+
+---
+
+## 9. Context Engineering — landscape research (2 Sep 2026)
+
+Surveyed to check the doc's concept coverage against how the topic is taught elsewhere.
+
+### Courses and videos
+
+| Resource | Format | Covers |
+|---|---|---|
+| <a href="https://scrimba.com/articles/best-context-engineering-courses-and-tutorials-2026/">Scrimba — Learn Context Engineering</a> | Interactive, ~59 min, paid | Best code-first course. System prompts, window management, token optimisation, summarisation |
+| <a href="https://www.deeplearning.ai/courses">DeepLearning.AI — Long-Term Agentic Memory with LangGraph</a> | Video, ~64 min, free | Harrison Chase. Semantic / episodic / procedural memory |
+| <a href="https://www.deeplearning.ai/courses">DeepLearning.AI — LLMs as Operating Systems: Agent Memory</a> | Video, ~82 min, free | MemGPT two-tier memory. Same OS analogy our doc uses |
+| Y Combinator — Context Engineering for Engineers (Jeff Huber, Chroma) | Video, ~11 min, free | Quick conceptual overview, needle-in-a-haystack |
+| <a href="https://www.udemy.com/course/become-an-llm-agentic-ai-engineer-14-day-bootcamp-2025/">Udemy — Context Engineering Masterclass</a> | Course, paid | RAG, agents, production patterns, prompt caching |
+
+### Written references
+
+| Source | Contributed |
+|---|---|
+| <a href="https://galileo.ai/blog/context-engineering-for-agents">Galileo — Deep dive into context engineering</a> | The fullest taxonomy found: five buckets (offloading, isolation, retrieval, reduction, caching), window-size strategy ladder, evaluation framework, empirical numbers |
+| <a href="https://arxiv.org/abs/2505.06120">LLMs Get Lost in Multi-Turn Conversation</a> (Microsoft + Salesforce) | **Used in the doc.** 200k+ simulated conversations, 15 models. 39% average drop when a task is sharded across turns; decomposes into −15% aptitude and +112% unreliability |
+| <a href="https://sourcegraph.com/blog/context-engineering">Sourcegraph — Context Engineering</a> | Still returns HTTP 403 to automated fetch; listed but unread |
+
+### Coverage assessment
+
+**Covered, and in two places better than most sources** — memory vs context (Galileo treats it as
+core; most tutorials skip it) and the hard-limit / soft-limit split.
+
+Fully covered: the four Breunig failure modes with worked examples · write / select / compress /
+isolate · context rot · Lost in the Middle · tool-set bloat · statelessness · the context stack
+(our six layers are a superset of the usual four types).
+
+**Added after this research:** multi-turn degradation (§ *The Problem*) and evaluation
+(§ *How to Tell If It Worked*).
+
+**Known gaps, deliberately left out:**
+
+| Gap | Why |
+|---|---|
+| Offloading as a named pattern | Partly covered by *write*; a distinct pattern (external store, pass summaries/paths, stay recoverable) if we want it later |
+| Window-size strategy ladder | <10k append-only · 10–50k compress at boundaries · 50–100k offload · >100k multi-agent. Concrete and actionable; not yet included |
+| Structured outputs | Listed as a context component by DAIR.AI; absent here |
+| Prompt caching / KV-cache | **Deliberately excluded** — cost framing was judged a distraction for this audience |
+
+**Empirical anchors available if wanted:** quantised Llama 3.1 8B failed with 46 tools but
+succeeded with 19 (Berkeley Function-Calling Leaderboard) — direct support for Principle 3; and
+GPT-4o accuracy moving 98.1% → 64.1% on presentation alone.

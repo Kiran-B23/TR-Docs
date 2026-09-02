@@ -9,6 +9,7 @@ from langchain.chat_models import init_chat_model
 from langchain.agents import create_agent
 from langchain.agents.middleware import ContextEditingMiddleware, ClearToolUsesEdit
 from langgraph.checkpoint.memory import InMemorySaver
+from langchain_core.rate_limiters import InMemoryRateLimiter
 
 load_dotenv("../../.env")
 TAVILY = os.environ["TAVILY_API_KEY"]; RAPID = os.environ["RAPID_API_KEY"]
@@ -40,9 +41,13 @@ TURNS = ["Find me Generative AI jobs in Hyderabad",
          "And Machine Learning in Pune",
          "Of the Pune roles you just listed, which need less than 2 years experience?"]
 
+# free tier allows 5 requests/minute -> pace at 1 every 15s with burst 1
+LIMITER = InMemoryRateLimiter(requests_per_second=1/15, check_every_n_seconds=0.5, max_bucket_size=1)
+
 def run(label, middleware):
     agent = create_agent(model=init_chat_model("google_genai:gemini-2.5-flash",
-                                               api_key=os.environ["GOOGLE_API_KEY"]),
+                                               api_key=os.environ["GOOGLE_API_KEY"],
+                                               rate_limiter=LIMITER),
                          system_prompt=SYS, tools=[skill_demand, search_jobs],
                          middleware=middleware, checkpointer=InMemorySaver())
     cfg = {"configurable": {"thread_id": label}}
